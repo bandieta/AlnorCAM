@@ -70,39 +70,83 @@ const ShapeGeometries = {
 
   QBa: (dims) => {
     const { a = 10, b = 10, e = 5, f = 3, r = 2 } = dims;
-    const max = Math.max(a, b, e, f, r, b + r);
-    const na = a / max, nb = b / max, ne = e / max, nf = f / max, nr = r / max;
     
-    const xy = (nb + nr) / 2;
+    // Calculate max for normalization - exactly as in Form1.cs
+    let max = Math.max(a, b);
+    max = Math.max(max, e);
+    max = Math.max(max, f);
+    max = Math.max(max, r);
+    max = Math.max(max, b + r);
+    
+    let na = a / max;
+    let nb = b / max;
+    let ne = e / max;
+    let nf = f / max;
+    let nr = r / max;
+    
+    // Basic rectangular points (0-15)
+    const xy = (nb + nr) / 2.0;
     
     const points = [
-      [nr - xy, xy, -na / 2], // 0
-      [nr - xy + nb, xy, -na / 2], // 1
-      [nr - xy + nb, xy, na / 2], // 2
-      [nr - xy, xy, na / 2], // 3
-      [nr - xy, xy + ne, -na / 2], // 4
-      [nr - xy + nb, xy + ne, -na / 2], // 5
-      [nr - xy + nb, xy + ne, na / 2], // 6
-      [nr - xy, xy + ne, na / 2], // 7
-      [-xy, -nr + xy, -na / 2], // 8
-      [-xy + nb, -nr + xy, -na / 2], // 9
-      [-xy + nb, -nr + xy, na / 2], // 10
-      [-xy, -nr + xy, na / 2]  // 11
+      [nr - xy, xy, -na / 2.0],                 // 0
+      [nr - xy + nb, xy, -na / 2.0],            // 1
+      [nr - xy + nb, xy, na / 2.0],             // 2
+      [nr - xy, xy, na / 2.0],                  // 3
+      [nr - xy, xy + ne, -na / 2.0],            // 4
+      [nr - xy + nb, xy + ne, -na / 2.0],       // 5
+      [nr - xy + nb, xy + ne, na / 2.0],        // 6
+      [nr - xy, xy + ne, na / 2.0],             // 7
+      [-xy, -nr + xy, -na / 2.0],               // 8
+      [-xy, -nr + xy, na / 2.0],                // 9
+      [-xy, -nb - nr + xy, na / 2.0],           // 10
+      [-xy, -nb - nr + xy, -na / 2.0],          // 11
+      [-xy - nf, -nr + xy, -na / 2.0],          // 12
+      [-xy - nf, -nr + xy, na / 2.0],           // 13
+      [-xy - nf, -nb - nr + xy, na / 2.0],      // 14
+      [-xy - nf, -nb - nr + xy, -na / 2.0]      // 15
     ];
     
+    // Quad faces from glDraw rendering
     const faces = [
-      [0, 1, 2, 3],
-      [4, 5, 6, 7],
-      [8, 9, 10, 11],
-      [0, 4, 5, 1],
-      [1, 5, 6, 2],
-      [2, 6, 7, 3],
-      [3, 7, 4, 0],
-      [0, 1, 9, 8],
-      [1, 2, 10, 9],
-      [2, 3, 11, 10],
-      [3, 0, 8, 11]
+      [0, 4, 5, 1],   // face 1
+      [2, 6, 5, 1],   // face 2
+      [3, 7, 6, 2],   // face 3
+      [3, 7, 4, 0],   // face 4
+      [8, 9, 13, 12], // face 5
+      [9, 10, 14, 13],// face 6
+      [11, 10, 14, 15],// face 7
+      [8, 11, 15, 12] // face 8
     ];
+    
+    // Circular arc sections - 6 segments with 7 points each
+    const arcPoints = [];
+    for (let i = 0; i < 7; i++) {
+      const angle = i * 15 * Math.PI / 180.0;
+      arcPoints.push({
+        pktLuku1: [Math.cos(angle) * nr - xy, -Math.sin(angle) * nr + xy, -na / 2.0],
+        pktLuku2: [Math.cos(angle) * (nr + nb) - xy, -Math.sin(angle) * (nr + nb) + xy, -na / 2.0],
+        pktLuku3: [Math.cos(angle) * (nr + nb) - xy, -Math.sin(angle) * (nr + nb) + xy, na / 2.0],
+        pktLuku4: [Math.cos(angle) * nr - xy, -Math.sin(angle) * nr + xy, na / 2.0]
+      });
+    }
+    
+    // Add arc quad faces (6 segments)
+    const arcFaceStartIndex = points.length;
+    for (let i = 0; i < 6; i++) {
+      const p1 = arcPoints[i];
+      const p2 = arcPoints[i + 1];
+      
+      // Add the 4 arc points for this segment to points array
+      const idx = points.length;
+      points.push(p1.pktLuku1, p1.pktLuku2, p1.pktLuku3, p1.pktLuku4);
+      points.push(p2.pktLuku1, p2.pktLuku2, p2.pktLuku3, p2.pktLuku4);
+      
+      // 4 quads per segment as in glDraw
+      faces.push([idx, idx+4, idx+5, idx+1]);     // pktLuku1 to pktLuku2
+      faces.push([idx+1, idx+5, idx+6, idx+2]);   // pktLuku2 to pktLuku3
+      faces.push([idx+3, idx+2, idx+6, idx+7]);   // pktLuku4 to pktLuku3
+      faces.push([idx, idx+4, idx+7, idx+3]);     // pktLuku1 to pktLuku4
+    }
     
     return createBufferGeometry(points, faces);
   },
