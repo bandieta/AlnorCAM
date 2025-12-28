@@ -11,42 +11,57 @@ const createGalvanizedTexture = () => {
   canvas.height = size;
   const ctx = canvas.getContext('2d');
 
-  // Fill background
-  ctx.fillStyle = '#808080';
+  // Fill background with a base metallic gray
+  ctx.fillStyle = '#b0b0b0';
   ctx.fillRect(0, 0, size, size);
 
-  // Add noise/spangles
-  for (let i = 0; i < 8000; i++) {
+  // Create spangle pattern (crystallized zinc look)
+  for (let i = 0; i < 400; i++) {
     const x = Math.random() * size;
     const y = Math.random() * size;
-    const radius = Math.random() * 15 + 2;
-    const gray = Math.floor(Math.random() * 50 + 120); // 120-170 (Lighter, more metallic)
+    const radius = Math.random() * 40 + 10;
     
-    const grd = ctx.createRadialGradient(x, y, 0, x, y, radius);
-    grd.addColorStop(0, `rgba(${gray}, ${gray}, ${gray}, 0.7)`);
-    grd.addColorStop(1, `rgba(${gray}, ${gray}, ${gray}, 0)`);
+    // Random polygon for crystal shape
+    const sides = Math.floor(Math.random() * 3) + 4; // 4-6 sides
+    const angleOffset = Math.random() * Math.PI * 2;
     
-    ctx.fillStyle = grd;
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    for (let j = 0; j < sides; j++) {
+      const angle = angleOffset + (j / sides) * Math.PI * 2;
+      const px = x + Math.cos(angle) * radius;
+      const py = y + Math.sin(angle) * radius;
+      if (j === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    
+    // Varying shades of gray/blue-ish for zinc look
+    const shade = Math.floor(Math.random() * 40 + 160); // 160-200
+    const alpha = Math.random() * 0.3 + 0.1;
+    ctx.fillStyle = `rgba(${shade}, ${shade}, ${shade + 10}, ${alpha})`;
     ctx.fill();
+    
+    // Add a slight stroke for definition
+    ctx.strokeStyle = `rgba(${shade-20}, ${shade-20}, ${shade-10}, ${alpha/2})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
-  
-  // Add some noise
+
+  // Add fine noise for roughness
   const imageData = ctx.getImageData(0, 0, size, size);
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
-    const noise = (Math.random() - 0.5) * 15;
-    data[i] += noise;
-    data[i+1] += noise;
-    data[i+2] += noise;
+    const noise = (Math.random() - 0.5) * 20;
+    data[i] = Math.min(255, Math.max(0, data[i] + noise));
+    data[i+1] = Math.min(255, Math.max(0, data[i+1] + noise));
+    data[i+2] = Math.min(255, Math.max(0, data[i+2] + noise));
   }
   ctx.putImageData(imageData, 0, 0);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(4, 4); // Tighter pattern for realism
+  texture.repeat.set(2, 2); // Larger pattern
   return texture;
 };
 
@@ -103,10 +118,11 @@ const ShapeGeometries = {
     ];
     
     // Add faces (quads) - Corrected winding for proper lighting
+    // Removed Front and Back faces to make it a hollow duct
     const faces = [
-      [4, 5, 6, 7], // Front (Z+)
+      // [4, 5, 6, 7], // Front (Z+) - Removed
       [1, 5, 6, 2], // Right (X+)
-      [0, 1, 2, 3], // Back (Z-)
+      // [0, 1, 2, 3], // Back (Z-) - Removed
       [0, 4, 7, 3], // Left (X-)
       [3, 7, 6, 2], // Top (Y+)
       [4, 5, 1, 0]  // Bottom (Y-)
@@ -196,6 +212,106 @@ const ShapeGeometries = {
     }
     
     return createBufferGeometry(points, faces);
+  },
+
+  QBNa: (dims) => {
+    const { a = 10, b = 10, e = 5, f = 3, r = 2, alfa = 90 } = dims;
+    
+    // Calculate max for normalization
+    let max = Math.max(a, b, e, f, r, b + r);
+    max = Math.max(max, b / Math.sin(alfa * Math.PI / 180.0) + r);
+    
+    const na = a / max;
+    const nb = b / max;
+    const ne = e / max;
+    const nf = f / max;
+    const nr = r / max;
+    
+    const xy = (nb + nr) / 2.0;
+    const points = [];
+    
+    // Start extension (e) - Points 0-7
+    points.push([nr - xy, xy, -na / 2.0]);              // 0
+    points.push([nr - xy + nb, xy, -na / 2.0]);         // 1
+    points.push([nr - xy + nb, xy, na / 2.0]);          // 2
+    points.push([nr - xy, xy, na / 2.0]);               // 3
+    
+    points.push([nr - xy, xy + ne, -na / 2.0]);         // 4
+    points.push([nr - xy + nb, xy + ne, -na / 2.0]);    // 5
+    points.push([nr - xy + nb, xy + ne, na / 2.0]);     // 6
+    points.push([nr - xy, xy + ne, na / 2.0]);          // 7
+    
+    // End extension (f) - Points 8-15
+    const rad = alfa * Math.PI / 180.0;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    
+    // Points 8-11 (Start of end extension / End of arc)
+    points.push([cos * nr - xy, -sin * nr + xy, -na / 2.0]);              // 8
+    points.push([cos * (nr + nb) - xy, -sin * (nr + nb) + xy, -na / 2.0]); // 9
+    points.push([cos * (nr + nb) - xy, -sin * (nr + nb) + xy, na / 2.0]);  // 10
+    points.push([cos * nr - xy, -sin * nr + xy, na / 2.0]);               // 11
+    
+    // Points 12-15 (End of end extension)
+    const dx = -sin * nf;
+    const dy = -cos * nf;
+    
+    points.push([points[8][0] + dx, points[8][1] + dy, -na / 2.0]);       // 12
+    points.push([points[9][0] + dx, points[9][1] + dy, -na / 2.0]);       // 13
+    points.push([points[10][0] + dx, points[10][1] + dy, na / 2.0]);      // 14
+    points.push([points[11][0] + dx, points[11][1] + dy, na / 2.0]);      // 15
+    
+    const faces = [];
+    
+    // Start extension faces
+    faces.push([0, 4, 5, 1]);   // Front (Z-)
+    faces.push([1, 5, 6, 2]);   // Right (X+)
+    faces.push([2, 6, 7, 3]);   // Back (Z+)
+    faces.push([3, 7, 4, 0]);   // Left (X-)
+    
+    // End extension faces
+    faces.push([8, 9, 13, 12]);   // Front (Z-)
+    faces.push([9, 10, 14, 13]);  // Outer
+    faces.push([11, 10, 14, 15]); // Back (Z+)
+    faces.push([11, 8, 12, 15]);  // Inner
+    
+    // Arc segments
+    const segments = Math.max(3, Math.floor(alfa / 15));
+    const arcPoints = [];
+    
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * rad;
+      const c = Math.cos(angle);
+      const s = Math.sin(angle);
+      
+      arcPoints.push({
+        p1: [c * nr - xy, -s * nr + xy, -na / 2.0],
+        p2: [c * (nr + nb) - xy, -s * (nr + nb) + xy, -na / 2.0],
+        p3: [c * (nr + nb) - xy, -s * (nr + nb) + xy, na / 2.0],
+        p4: [c * nr - xy, -s * nr + xy, na / 2.0]
+      });
+    }
+    
+    // Add arc faces
+    for (let i = 0; i < segments; i++) {
+      const ap1 = arcPoints[i];
+      const ap2 = arcPoints[i + 1];
+      
+      const idx = points.length;
+      // Push arrays of coordinates
+      points.push(ap1.p1, ap1.p2, ap1.p3, ap1.p4);
+      points.push(ap2.p1, ap2.p2, ap2.p3, ap2.p4);
+      
+      // Winding order: Bottom, Outer, Top, Inner
+      faces.push([idx, idx+1, idx+5, idx+4]);     // Front (Z-)
+      faces.push([idx+1, idx+2, idx+6, idx+5]);   // Outer
+      faces.push([idx+2, idx+3, idx+7, idx+6]);   // Back (Z+)
+      faces.push([idx+3, idx, idx+4, idx+7]);     // Inner
+    }
+    
+    const geometry = createBufferGeometry(points, faces);
+    geometry.center(); // Center the geometry at (0,0,0)
+    return geometry;
   },
 
   TR1a: (dims) => {
@@ -320,11 +436,11 @@ function Viewer3D({ elements, selectedId }) {
     controls.maxDistance = 1000;
     controlsRef.current = controls;
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Lights - Softer, more realistic lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); // Reduced from 0.6
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8); // Reduced from 1.0
     mainLight.position.set(50, 100, 50);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
@@ -332,7 +448,7 @@ function Viewer3D({ elements, selectedId }) {
     mainLight.shadow.bias = -0.0001;
     scene.add(mainLight);
 
-    const fillLight = new THREE.DirectionalLight(0xbfd6e7, 0.6);
+    const fillLight = new THREE.DirectionalLight(0xbfd6e7, 0.4); // Reduced from 0.6
     fillLight.position.set(-50, 20, -50);
     scene.add(fillLight);
 
@@ -342,11 +458,11 @@ function Viewer3D({ elements, selectedId }) {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
     
-    // Create a studio-like gradient environment
+    // Create a studio-like gradient environment - Darker for better contrast
     const gradient = ctx.createLinearGradient(0, 0, 0, 512);
     gradient.addColorStop(0, '#ffffff');
-    gradient.addColorStop(0.5, '#aaccff');
-    gradient.addColorStop(1, '#8899aa');
+    gradient.addColorStop(0.5, '#8899aa'); // Darker middle
+    gradient.addColorStop(1, '#556677');   // Darker bottom
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 512, 512);
     
@@ -428,14 +544,14 @@ function Viewer3D({ elements, selectedId }) {
       }
       
       const material = new THREE.MeshStandardMaterial({
-        color: 0xffffff,            // White base to let texture show through
-        metalness: 0.7,             // More metallic
-        roughness: 0.4,             // Smoother/Shinier
+        color: 0xdddddd,            // Slightly darker base
+        metalness: 0.6,             // Slightly less metallic to avoid over-reflection
+        roughness: 0.5,             // Rougher for galvanized look
         roughnessMap: galvanizedTextureRef.current,
         bumpMap: galvanizedTextureRef.current,
-        bumpScale: 0.01,            // Subtler bump
+        bumpScale: 0.005,           // Very subtle bump
         envMap: envMapRef.current,
-        envMapIntensity: 1.2,
+        envMapIntensity: 0.8,       // Reduced reflection intensity
         side: THREE.DoubleSide
       });
 

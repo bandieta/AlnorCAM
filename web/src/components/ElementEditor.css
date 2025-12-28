@@ -37,6 +37,27 @@
   flex-shrink: 0;
 }
 
+.validation-errors {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+.error-message {
+  color: #cf1322;
+  font-size: 13px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.error-message:last-child {
+  margin-bottom: 0;
+}
+
 .editor-body {
   flex: 1;
   overflow-y: auto;
@@ -120,3 +141,23 @@
   background: #f9f9f9;
   border-radius: 4px;
 }
+
+.property.highlight {
+  background-color: #f0f7ff;
+  border: 1px solid #bae0ff;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 8px 0;
+}
+
+.property.highlight label {
+  color: #0050b3;
+  font-weight: 600;
+}
+
+.property.highlight .property-value {
+  color: #0050b3;
+  font-weight: 700;
+  font-size: 15px;
+}
+

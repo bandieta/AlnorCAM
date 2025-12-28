@@ -37,12 +37,9 @@ const SHAPE_DEFINITIONS = {
 };
 
 function App() {
-  const [elements, setElements] = useState([
-    { id: 1, symbol: 'QDa', dimensions: { a: 10, b: 10, l: 10 }, color: '#ff6b6b' },
-    { id: 2, symbol: 'QBa', dimensions: { a: 12, b: 8, e: 5, f: 3, r: 2 }, color: '#4ecdc4' },
-    { id: 3, symbol: 'TR1a', dimensions: { a: 8, b: 6, d: 4, w: 2, e: 3, f: 2, l: 12, l3: 2 }, color: '#45b7d1' }
-  ]);
-  const [selectedId, setSelectedId] = useState(1);
+  const [elements, setElements] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const selectedElement = elements.find(el => el.id === selectedId);
 
@@ -79,9 +76,33 @@ function App() {
     if (!shapeConfig) return {};
     
     const dimensions = {};
-    shapeConfig.dimensions.forEach(dim => {
-      dimensions[dim] = 10; // Default value
-    });
+    
+    // Set specific defaults based on Form1.cs
+    if (symbol === 'QDa') {
+      dimensions.a = 200;
+      dimensions.b = 200;
+      dimensions.L = 500;
+    } else if (symbol === 'QBa') {
+      dimensions.a = 300;
+      dimensions.b = 300;
+      dimensions.e = 40;
+      dimensions.f = 40;
+      dimensions.r = 150;
+    } else if (symbol === 'QBNa') {
+      dimensions.a = 300;
+      dimensions.b = 300;
+      dimensions.e = 40;
+      dimensions.f = 40;
+      dimensions.r = 150;
+      dimensions.alfa = 60;
+      dimensions.alfa = 60;
+    } else {
+      // Generic default for others
+      shapeConfig.dimensions.forEach(dim => {
+        dimensions[dim] = 10; 
+      });
+    }
+    
     return dimensions;
   };
 
@@ -96,16 +117,27 @@ function App() {
         <p>Shape Library from AlnorCAM</p>
       </header>
       <div className="app-container">
-        <aside className="sidebar">
-          <ElementsList 
-            elements={elements}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onAdd={addElement}
-            onDelete={deleteElement}
-            availableSymbols={getAvailableSymbols()}
-            shapeDefinitions={SHAPE_DEFINITIONS}
-          />
+        <aside className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
+          <div className="sidebar-header-controls">
+            <button 
+              className="sidebar-toggle" 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+            >
+              {isSidebarOpen ? '◀' : '▶'}
+            </button>
+          </div>
+          {isSidebarOpen && (
+            <ElementsList 
+              elements={elements}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onAdd={addElement}
+              onDelete={deleteElement}
+              availableSymbols={getAvailableSymbols()}
+              shapeDefinitions={SHAPE_DEFINITIONS}
+            />
+          )}
         </aside>
         <main className="main-content">
           {selectedElement && (

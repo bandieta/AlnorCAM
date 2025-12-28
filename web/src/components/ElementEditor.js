@@ -1,4 +1,6 @@
 import React from 'react';
+import { validateDimensions } from '../utils/validation';
+import { calculateArea } from '../utils/calculations';
 import './ElementEditor.css';
 
 function ElementEditor({ element, onUpdate, shapeDefinition }) {
@@ -11,6 +13,8 @@ function ElementEditor({ element, onUpdate, shapeDefinition }) {
   };
 
   const dimensionLabels = shapeDefinition?.dimensions || [];
+  const validationErrors = validateDimensions(element.symbol, element.dimensions);
+  const area = calculateArea(element.symbol, element.dimensions);
 
   return (
     <div className="element-editor">
@@ -21,6 +25,14 @@ function ElementEditor({ element, onUpdate, shapeDefinition }) {
         </div>
         <div className="symbol-badge">{element.symbol}</div>
       </div>
+
+      {validationErrors.length > 0 && (
+        <div className="validation-errors">
+          {validationErrors.map((error, index) => (
+            <div key={index} className="error-message">⚠️ {error}</div>
+          ))}
+        </div>
+      )}
 
       <div className="editor-body">
         <div className="property">
@@ -37,6 +49,13 @@ function ElementEditor({ element, onUpdate, shapeDefinition }) {
           <label>Type</label>
           <div className="property-value">{shapeDefinition?.polish}</div>
         </div>
+
+        {area !== null && (
+          <div className="property highlight">
+            <label>Suma blachy</label>
+            <div className="property-value">{area} m²</div>
+          </div>
+        )}
 
         <div className="divider"></div>
 
