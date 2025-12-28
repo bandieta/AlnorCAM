@@ -11,7 +11,7 @@ const LIMITS = {
 
 export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
   const errors = [];
-  const { a, b, e, f, r, alfa, L } = dimensions;
+  const { a, b, e, f, r, alfa, L, c, d } = dimensions;
 
   // Helper to check if value is valid number
   const isNum = (val) => typeof val === 'number' && !isNaN(val);
@@ -35,6 +35,18 @@ export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
   if (b !== undefined) {
     if (!isNum(b) || b < LIMITS.MIN_DIM || b > maxDim) {
       errors.push(`Dimension 'b' must be between ${LIMITS.MIN_DIM} and ${maxDim}mm`);
+    }
+  }
+
+  if (c !== undefined) {
+    if (!isNum(c) || c < LIMITS.MIN_DIM || c > maxDim) {
+      errors.push(`Dimension 'c' must be between ${LIMITS.MIN_DIM} and ${maxDim}mm`);
+    }
+  }
+
+  if (d !== undefined) {
+    if (!isNum(d) || d < LIMITS.MIN_DIM || d > maxDim) {
+      errors.push(`Dimension 'd' must be between ${LIMITS.MIN_DIM} and ${maxDim}mm`);
     }
   }
 

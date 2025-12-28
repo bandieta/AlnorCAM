@@ -95,7 +95,14 @@ function App() {
       dimensions.f = 40;
       dimensions.r = 150;
       dimensions.alfa = 60;
-      dimensions.alfa = 60;
+    } else if (symbol === 'QPR6a') {
+      dimensions.a = 400;
+      dimensions.b = 350;
+      dimensions.c = 100;
+      dimensions.d = 100;
+      dimensions.L = 500;
+      dimensions.h = 60;
+      dimensions.m = 60;
     } else {
       // Generic default for others
       shapeConfig.dimensions.forEach(dim => {

@@ -314,6 +314,69 @@ const ShapeGeometries = {
     return geometry;
   },
 
+  QPR6a: (dims) => {
+    const { a = 400, b = 350, c = 100, d = 100, L = 500, h = 60, m = 60 } = dims;
+    
+    // Normalize
+    let max = Math.max(a, b, c, d, L, h, m);
+    const na = a / max, nb = b / max, nc = c / max, nd = d / max;
+    const nL = L / max, nh = h / max, nm = m / max;
+    
+    const points = [];
+    
+    // Z coordinates
+    const z0 = -nL / 2;
+    const z1 = -nL / 2 + nh;
+    const z2 = nL / 2 - nm;
+    const z3 = nL / 2;
+    
+    // Section 1: Start (a x b) at z0
+    points.push([-na / 2, nb / 2, z0]);   // 0: TL
+    points.push([-na / 2, -nb / 2, z0]);  // 1: BL
+    points.push([na / 2, -nb / 2, z0]);   // 2: BR
+    points.push([na / 2, nb / 2, z0]);    // 3: TR
+    
+    // Section 2: End of Ext 1 (a x b) at z1
+    points.push([-na / 2, nb / 2, z1]);   // 4: TL
+    points.push([-na / 2, -nb / 2, z1]);  // 5: BL
+    points.push([na / 2, -nb / 2, z1]);   // 6: BR
+    points.push([na / 2, nb / 2, z1]);    // 7: TR
+    
+    // Section 3: Start of Ext 2 (c x d) at z2
+    points.push([-nc / 2, nd / 2, z2]);   // 8: TL
+    points.push([-nc / 2, -nd / 2, z2]);  // 9: BL
+    points.push([nc / 2, -nd / 2, z2]);   // 10: BR
+    points.push([nc / 2, nd / 2, z2]);    // 11: TR
+    
+    // Section 4: End (c x d) at z3
+    points.push([-nc / 2, nd / 2, z3]);   // 12: TL
+    points.push([-nc / 2, -nd / 2, z3]);  // 13: BL
+    points.push([nc / 2, -nd / 2, z3]);   // 14: BR
+    points.push([nc / 2, nd / 2, z3]);    // 15: TR
+    
+    const faces = [
+      // Extension 1 Walls
+      [0, 1, 5, 4], // Left
+      [1, 2, 6, 5], // Bottom
+      [2, 3, 7, 6], // Right
+      [3, 0, 4, 7], // Top
+      
+      // Reduction Walls
+      [4, 5, 9, 8],   // Left
+      [5, 6, 10, 9],  // Bottom
+      [6, 7, 11, 10], // Right
+      [7, 4, 8, 11],  // Top
+      
+      // Extension 2 Walls
+      [8, 9, 13, 12],   // Left
+      [9, 10, 14, 13],  // Bottom
+      [10, 11, 15, 14], // Right
+      [11, 8, 12, 15]   // Top
+    ];
+    
+    return createBufferGeometry(points, faces);
+  },
+
   TR1a: (dims) => {
     const { a = 10, b = 10, d = 5, w = 2, L = 12, e = 3, f = 2, l3 = 2 } = dims;
     const max = Math.max(a, b, d, w, L, e, f, l3);
