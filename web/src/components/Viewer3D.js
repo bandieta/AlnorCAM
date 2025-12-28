@@ -218,16 +218,16 @@ function Viewer3D({ elements, selectedId }) {
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Lights - matching glDraw() lighting setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    // Lights - matching glDraw() lighting setup but enhanced for steel
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    // Multiple lights like in glDraw
+    // Multiple lights like in glDraw - enhanced for metallic surfaces
     const lights = [
-      { pos: [100, 100, 70], color: 0xffffff, intensity: 0.8 },
-      { pos: [-100, 100, 100], color: 0xffffff, intensity: 0.6 },
-      { pos: [100, -100, 100], color: 0xffffff, intensity: 0.6 },
-      { pos: [-100, -100, 100], color: 0xffffff, intensity: 0.5 }
+      { pos: [100, 100, 70], color: 0xffffff, intensity: 1.0 },
+      { pos: [-100, 100, 100], color: 0xffffff, intensity: 0.8 },
+      { pos: [100, -100, 100], color: 0xffffff, intensity: 0.8 },
+      { pos: [-100, -100, 100], color: 0xffffff, intensity: 0.6 }
     ];
 
     lights.forEach(light => {
@@ -238,6 +238,28 @@ function Viewer3D({ elements, selectedId }) {
       directionalLight.shadow.mapSize.height = 2048;
       scene.add(directionalLight);
     });
+
+    // Add additional rim lighting for better metal appearance
+    const rimLight = new THREE.DirectionalLight(0x88ccff, 0.5);
+    rimLight.position.set(0, 50, -100);
+    scene.add(rimLight);
+
+    // Create a simple environment texture for reflections (procedural)
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    // Create a gradient environment
+    const gradient = ctx.createLinearGradient(0, 0, 256, 256);
+    gradient.addColorStop(0, '#1a1a2e');    // Dark blue-gray
+    gradient.addColorStop(0.5, '#aaaacc');  // Light blue-gray
+    gradient.addColorStop(1, '#ffffff');    // White
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 256, 256);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const envMapIntensity = 0.5;
 
     // Grid and axes helpers
     const gridHelper = new THREE.GridHelper(200, 20, 0xcccccc, 0xeeeeee);
@@ -286,7 +308,8 @@ function Viewer3D({ elements, selectedId }) {
       e.preventDefault();
       const direction = camera.position.clone().normalize();
       const distance = camera.position.length();
-      const newDistance = Math.max(10, distance + e.deltaY * 0.1);
+      // Allow zoom from 5 units close to 500 units far
+      const newDistance = Math.max(5, Math.min(500, distance + e.deltaY * 0.1));
       camera.position.copy(direction.multiplyScalar(newDistance));
       camera.lookAt(0, 0, 0);
     }, { passive: false });
@@ -350,11 +373,12 @@ function Viewer3D({ elements, selectedId }) {
         geometry = createDefaultGeometry(selectedElement.dimensions);
       }
       
-      const material = new THREE.MeshPhongMaterial({
-        color: selectedElement.color,
-        shininess: 100,
-        wireframe: false,
-        flatShading: false
+      const material = new THREE.MeshStandardMaterial({
+        color: 0xb0b0b0,           // Steel gray color
+        metalness: 0.8,             // High metallic value for steel look
+        roughness: 0.3,             // Low roughness for polished steel
+        envMap: texture,
+        envMapIntensity: envMapIntensity
       });
 
       const mesh = new THREE.Mesh(geometry, material);
