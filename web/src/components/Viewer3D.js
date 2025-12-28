@@ -1,34 +1,81 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import './Viewer3D.css';
 
-// Helper function to create BufferGeometry from points and faces
+// Helper to generate a procedural galvanized steel texture
+const createGalvanizedTexture = () => {
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Fill background
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, size, size);
+
+  // Add noise/spangles
+  for (let i = 0; i < 8000; i++) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const radius = Math.random() * 15 + 2;
+    const gray = Math.floor(Math.random() * 50 + 120); // 120-170 (Lighter, more metallic)
+    
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    grd.addColorStop(0, `rgba(${gray}, ${gray}, ${gray}, 0.7)`);
+    grd.addColorStop(1, `rgba(${gray}, ${gray}, ${gray}, 0)`);
+    
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add some noise
+  const imageData = ctx.getImageData(0, 0, size, size);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 15;
+    data[i] += noise;
+    data[i+1] += noise;
+    data[i+2] += noise;
+  }
+  ctx.putImageData(imageData, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 4); // Tighter pattern for realism
+  return texture;
+};
+
+// Helper function to create BufferGeometry from points and faces (Non-indexed for flat shading)
 const createBufferGeometry = (points, faces) => {
   const geometry = new THREE.BufferGeometry();
+  const vertices = [];
   
-  // Flatten points array
-  const vertices = new Float32Array(points.length * 3);
-  points.forEach((p, i) => {
-    vertices[i * 3] = p[0];
-    vertices[i * 3 + 1] = p[1];
-    vertices[i * 3 + 2] = p[2];
-  });
-  
-  // Flatten faces array (convert quads to triangles)
-  const indices = [];
   faces.forEach(face => {
     if (face.length === 4) {
-      // Quad: split into 2 triangles
-      indices.push(face[0], face[1], face[2]);
-      indices.push(face[0], face[2], face[3]);
+      // Quad: split into 2 triangles (0-1-2 and 0-2-3)
+      const p0 = points[face[0]];
+      const p1 = points[face[1]];
+      const p2 = points[face[2]];
+      const p3 = points[face[3]];
+      
+      vertices.push(...p0, ...p1, ...p2);
+      vertices.push(...p0, ...p2, ...p3);
     } else if (face.length === 3) {
       // Triangle
-      indices.push(face[0], face[1], face[2]);
+      const p0 = points[face[0]];
+      const p1 = points[face[1]];
+      const p2 = points[face[2]];
+      
+      vertices.push(...p0, ...p1, ...p2);
     }
   });
   
-  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-  geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.computeVertexNormals();
   
   return geometry;
@@ -55,14 +102,14 @@ const ShapeGeometries = {
       [-na / 2, nb / 2, nl / 2]    // 7
     ];
     
-    // Add faces (quads)
+    // Add faces (quads) - Corrected winding for proper lighting
     const faces = [
-      [0, 4, 5, 1], // front
-      [2, 6, 5, 1], // right
-      [3, 7, 6, 2], // back
-      [0, 4, 7, 3], // left
-      [4, 5, 6, 7], // top
-      [0, 1, 2, 3]  // bottom
+      [4, 5, 6, 7], // Front (Z+)
+      [1, 5, 6, 2], // Right (X+)
+      [0, 1, 2, 3], // Back (Z-)
+      [0, 4, 7, 3], // Left (X-)
+      [3, 7, 6, 2], // Top (Y+)
+      [4, 5, 1, 0]  // Bottom (Y-)
     ];
     
     return createBufferGeometry(points, faces);
@@ -131,7 +178,6 @@ const ShapeGeometries = {
     }
     
     // Add arc quad faces (6 segments)
-    const arcFaceStartIndex = points.length;
     for (let i = 0; i < 6; i++) {
       const p1 = arcPoints[i];
       const p2 = arcPoints[i + 1];
@@ -142,10 +188,11 @@ const ShapeGeometries = {
       points.push(p2.pktLuku1, p2.pktLuku2, p2.pktLuku3, p2.pktLuku4);
       
       // 4 quads per segment as in glDraw
-      faces.push([idx, idx+4, idx+5, idx+1]);     // pktLuku1 to pktLuku2
-      faces.push([idx+1, idx+5, idx+6, idx+2]);   // pktLuku2 to pktLuku3
-      faces.push([idx+3, idx+2, idx+6, idx+7]);   // pktLuku4 to pktLuku3
-      faces.push([idx, idx+4, idx+7, idx+3]);     // pktLuku1 to pktLuku4
+      // Corrected winding order to match Form1.cs
+      faces.push([idx, idx+1, idx+5, idx+4]);     // pktLuku1 to pktLuku2 (Bottom)
+      faces.push([idx+1, idx+5, idx+6, idx+2]);   // pktLuku2 to pktLuku3 (Outer)
+      faces.push([idx+3, idx+2, idx+6, idx+7]);   // pktLuku4 to pktLuku3 (Top)
+      faces.push([idx, idx+4, idx+7, idx+3]);     // pktLuku1 to pktLuku4 (Inner)
     }
     
     return createBufferGeometry(points, faces);
@@ -156,23 +203,59 @@ const ShapeGeometries = {
     const max = Math.max(a, b, d, w, L, e, f, l3);
     
     const na = a / max, nb = b / max, nd = d / max, nw = w / max, nL = L / max;
+    const ne = e / max, nf = f / max, nl3 = l3 / max;
     
-    // Base vertices for simple triangular prism approximation
-    const points = [
-      [-na / 2, -nb / 2, -nL / 2],
-      [na / 2, -nb / 2, -nL / 2],
-      [0, nb / 2, -nL / 2],
-      [-na / 2, -nb / 2, nL / 2],
-      [na / 2, -nb / 2, nL / 2],
-      [0, nb / 2, nL / 2]
-    ];
+    const points = [];
+    
+    // Main duct points (0-7)
+    points.push([-nL / 2, nb / 2, -na / 2]);  // 0
+    points.push([nL / 2, nb / 2, -na / 2]);   // 1
+    points.push([nL / 2, -nb / 2, -na / 2]);  // 2
+    points.push([-nL / 2, -nb / 2, -na / 2]); // 3
+    points.push([-nL / 2, nb / 2, na / 2]);   // 4
+    points.push([nL / 2, nb / 2, na / 2]);    // 5
+    points.push([nL / 2, -nb / 2, na / 2]);   // 6
+    points.push([-nL / 2, -nb / 2, na / 2]);  // 7
+    
+    // Branch parameters
+    const dx = -nL / 2 + ne;
+    const dy = -nb / 2 - nl3 / 2;
+    const dz = -na / 2 + nf;
+    
+    // Branch points (8-15)
+    // Note: dy calculation in C# was -b/2 - l3/2.
+    // Points 8,9,12,13 use l3/2 + dy = -b/2 (Bottom face level)
+    // Points 10,11,14,15 use -l3/2 + dy = -b/2 - l3 (Branch end level)
+    
+    const yBottom = -nb / 2;
+    const yEnd = -nb / 2 - nl3;
+    
+    points.push([-nw / 2 + dx, yBottom, -nd / 2 + dz]); // 8
+    points.push([nw / 2 + dx, yBottom, -nd / 2 + dz]);  // 9
+    points.push([nw / 2 + dx, yEnd, -nd / 2 + dz]);     // 10
+    points.push([-nw / 2 + dx, yEnd, -nd / 2 + dz]);    // 11
+    
+    points.push([-nw / 2 + dx, yBottom, nd / 2 + dz]);  // 12
+    points.push([nw / 2 + dx, yBottom, nd / 2 + dz]);   // 13
+    points.push([nw / 2 + dx, yEnd, nd / 2 + dz]);      // 14
+    points.push([-nw / 2 + dx, yEnd, nd / 2 + dz]);     // 15
     
     const faces = [
-      [0, 1, 2],         // front
-      [3, 5, 4],         // back
-      [0, 3, 4, 1],      // bottom
-      [1, 4, 5, 2],      // right
-      [2, 5, 3, 0]       // left
+      [0, 1, 2, 3],      // Back
+      [0, 1, 5, 4],      // Top
+      [4, 5, 6, 7],      // Front
+      
+      // Bottom face split around branch (Reversed winding for outward facing)
+      [9, 8, 3, 2],      // Bottom 1
+      [6, 13, 9, 2],     // Bottom 2
+      [7, 6, 13, 12],    // Bottom 3
+      [7, 12, 8, 3],     // Bottom 4
+      
+      // Branch faces (Corrected winding)
+      [11, 10, 9, 8],    // Branch Back (Z-)
+      [10, 14, 13, 9],   // Branch Right (X+)
+      [15, 14, 13, 12],  // Branch Front (Z+)
+      [11, 15, 12, 8]    // Branch Left (X-)
     ];
     
     return createBufferGeometry(points, faces);
@@ -192,76 +275,88 @@ function Viewer3D({ elements, selectedId }) {
   const meshesRef = useRef({});
   const cameraRef = useRef(null);
   const envMapRef = useRef(null);
+  const galvanizedTextureRef = useRef(null);
+  const controlsRef = useRef(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     // Scene setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf5f5f5);
+    scene.background = new THREE.Color(0xf0f2f5); // Slightly lighter/cooler background
     sceneRef.current = scene;
 
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
-      75,
+      45, // Lower FOV for less distortion
       containerRef.current.clientWidth / containerRef.current.clientHeight,
       0.1,
       1000
     );
     camera.position.set(50, 50, 50);
-    camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
     // Renderer setup
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Lights - matching glDraw() lighting setup but enhanced for steel
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Controls - Trackball for free rotation
+    const controls = new TrackballControls(camera, renderer.domElement);
+    controls.rotateSpeed = 4.0;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    controls.noZoom = false;
+    controls.noPan = false;
+    controls.staticMoving = false;
+    controls.dynamicDampingFactor = 0.1;
+    controls.minDistance = 0.1; // Allow very close zoom
+    controls.maxDistance = 1000;
+    controlsRef.current = controls;
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    // Multiple lights like in glDraw - enhanced for metallic surfaces
-    const lights = [
-      { pos: [100, 100, 70], color: 0xffffff, intensity: 1.0 },
-      { pos: [-100, 100, 100], color: 0xffffff, intensity: 0.8 },
-      { pos: [100, -100, 100], color: 0xffffff, intensity: 0.8 },
-      { pos: [-100, -100, 100], color: 0xffffff, intensity: 0.6 }
-    ];
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    mainLight.position.set(50, 100, 50);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    mainLight.shadow.bias = -0.0001;
+    scene.add(mainLight);
 
-    lights.forEach(light => {
-      const directionalLight = new THREE.DirectionalLight(light.color, light.intensity);
-      directionalLight.position.set(...light.pos);
-      directionalLight.castShadow = true;
-      directionalLight.shadow.mapSize.width = 2048;
-      directionalLight.shadow.mapSize.height = 2048;
-      scene.add(directionalLight);
-    });
+    const fillLight = new THREE.DirectionalLight(0xbfd6e7, 0.6);
+    fillLight.position.set(-50, 20, -50);
+    scene.add(fillLight);
 
-    // Add additional rim lighting for better metal appearance
-    const rimLight = new THREE.DirectionalLight(0x88ccff, 0.5);
-    rimLight.position.set(0, 50, -100);
-    scene.add(rimLight);
-
-    // Create a simple environment texture for reflections (procedural)
+    // Environment Map (Reflection)
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 512;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d');
     
-    // Create a gradient environment
-    const gradient = ctx.createLinearGradient(0, 0, 256, 256);
-    gradient.addColorStop(0, '#1a1a2e');    // Dark blue-gray
-    gradient.addColorStop(0.5, '#aaaacc');  // Light blue-gray
-    gradient.addColorStop(1, '#ffffff');    // White
+    // Create a studio-like gradient environment
+    const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(0.5, '#aaccff');
+    gradient.addColorStop(1, '#8899aa');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillRect(0, 0, 512, 512);
     
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.mapping = THREE.EquirectangularReflectionMapping; // Ensure correct mapping
-    envMapRef.current = texture;
+    const envTexture = new THREE.CanvasTexture(canvas);
+    envTexture.mapping = THREE.EquirectangularReflectionMapping;
+    envMapRef.current = envTexture;
+    scene.environment = envTexture; // Apply as global environment
+
+    // Galvanized Texture
+    galvanizedTextureRef.current = createGalvanizedTexture();
 
     // Grid and axes helpers
     const gridHelper = new THREE.GridHelper(200, 20, 0xcccccc, 0xeeeeee);
@@ -269,52 +364,6 @@ function Viewer3D({ elements, selectedId }) {
 
     const axesHelper = new THREE.AxesHelper(50);
     scene.add(axesHelper);
-
-    // Mouse controls for rotation
-    let isDragging = false;
-    let previousMousePosition = { x: 0, y: 0 };
-
-    renderer.domElement.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      previousMousePosition = { x: e.clientX, y: e.clientY };
-    });
-
-    renderer.domElement.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        const deltaX = e.clientX - previousMousePosition.x;
-        const deltaY = e.clientY - previousMousePosition.y;
-
-        const currentPos = camera.position.clone();
-        const distance = currentPos.length();
-        
-        camera.position.applyAxisAngle(
-          new THREE.Vector3(0, 1, 0),
-          deltaX * 0.01
-        );
-        
-        const rightVector = new THREE.Vector3()
-          .crossVectors(camera.up, camera.position.clone().normalize())
-          .normalize();
-        camera.position.applyAxisAngle(rightVector, deltaY * 0.01);
-        
-        camera.lookAt(0, 0, 0);
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-      }
-    });
-
-    renderer.domElement.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
-
-    renderer.domElement.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const direction = camera.position.clone().normalize();
-      const distance = camera.position.length();
-      // Allow zoom from 5 units close to 500 units far
-      const newDistance = Math.max(5, Math.min(500, distance + e.deltaY * 0.1));
-      camera.position.copy(direction.multiplyScalar(newDistance));
-      camera.lookAt(0, 0, 0);
-    }, { passive: false });
 
     // Handle window resize
     const handleResize = () => {
@@ -324,6 +373,7 @@ function Viewer3D({ elements, selectedId }) {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      controls.handleResize();
     };
 
     window.addEventListener('resize', handleResize);
@@ -331,6 +381,7 @@ function Viewer3D({ elements, selectedId }) {
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
+      controls.update();
       renderer.render(scene, camera);
     };
     animate();
@@ -338,6 +389,7 @@ function Viewer3D({ elements, selectedId }) {
     return () => {
       window.removeEventListener('resize', handleResize);
       renderer.dispose();
+      controls.dispose();
       if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
         containerRef.current.removeChild(renderer.domElement);
       }
@@ -376,11 +428,15 @@ function Viewer3D({ elements, selectedId }) {
       }
       
       const material = new THREE.MeshStandardMaterial({
-        color: 0xb0b0b0,           // Steel gray color
-        metalness: 0.8,             // High metallic value for steel look
-        roughness: 0.3,             // Low roughness for polished steel
+        color: 0xffffff,            // White base to let texture show through
+        metalness: 0.7,             // More metallic
+        roughness: 0.4,             // Smoother/Shinier
+        roughnessMap: galvanizedTextureRef.current,
+        bumpMap: galvanizedTextureRef.current,
+        bumpScale: 0.01,            // Subtler bump
         envMap: envMapRef.current,
-        envMapIntensity: 0.5
+        envMapIntensity: 1.2,
+        side: THREE.DoubleSide
       });
 
       const mesh = new THREE.Mesh(geometry, material);
