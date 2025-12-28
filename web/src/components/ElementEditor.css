@@ -1,0 +1,122 @@
+.element-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+  gap: 16px;
+}
+
+.editor-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.description {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+.symbol-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.editor-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.property {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.property label {
+  font-weight: 600;
+  color: #666;
+  font-size: 11px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.property-value {
+  padding: 8px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.property input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.property input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.unit {
+  font-size: 11px;
+  color: #999;
+  font-weight: 500;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 20px 0;
+}
+
+.dimensions-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  color: #333;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.no-dimensions {
+  margin: 0;
+  padding: 12px;
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}

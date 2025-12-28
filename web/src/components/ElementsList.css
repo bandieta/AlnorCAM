@@ -1,0 +1,157 @@
+.elements-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.list-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.count {
+  background: #667eea;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.add-element {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.add-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  background-color: white;
+  font-weight: 500;
+}
+
+.add-select:hover {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.list-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #999;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.empty-hint {
+  font-size: 11px !important;
+  color: #ccc;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f9f9f9;
+  border-left: 4px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.list-item:hover {
+  background: #f0f0f0;
+  border-left-color: #667eea;
+}
+
+.list-item.active {
+  background: #e8eaf6;
+  border-left-color: #667eea;
+  font-weight: 500;
+  box-shadow: 0 0 0 1px #667eea;
+}
+
+.item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.color-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid #ddd;
+  flex-shrink: 0;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.symbol {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.polish-name {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-weight: 500;
+}
+
+.id {
+  font-size: 11px;
+  color: #ccc;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.delete-btn:hover {
+  color: #ff6b6b;
+}
+
