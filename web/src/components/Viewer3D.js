@@ -191,6 +191,7 @@ function Viewer3D({ elements, selectedId }) {
   const rendererRef = useRef(null);
   const meshesRef = useRef({});
   const cameraRef = useRef(null);
+  const envMapRef = useRef(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -259,7 +260,8 @@ function Viewer3D({ elements, selectedId }) {
     ctx.fillRect(0, 0, 256, 256);
     
     const texture = new THREE.CanvasTexture(canvas);
-    const envMapIntensity = 0.5;
+    texture.mapping = THREE.EquirectangularReflectionMapping; // Ensure correct mapping
+    envMapRef.current = texture;
 
     // Grid and axes helpers
     const gridHelper = new THREE.GridHelper(200, 20, 0xcccccc, 0xeeeeee);
@@ -377,8 +379,8 @@ function Viewer3D({ elements, selectedId }) {
         color: 0xb0b0b0,           // Steel gray color
         metalness: 0.8,             // High metallic value for steel look
         roughness: 0.3,             // Low roughness for polished steel
-        envMap: texture,
-        envMapIntensity: envMapIntensity
+        envMap: envMapRef.current,
+        envMapIntensity: 0.5
       });
 
       const mesh = new THREE.Mesh(geometry, material);
