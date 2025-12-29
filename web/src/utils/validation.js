@@ -86,6 +86,34 @@ export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
     if (alfa !== undefined && (alfa < 15 || alfa > 90)) {
       errors.push("Angle 'alfa' must be between 15 and 90 degrees");
     }
+
+    const hasRadius = r !== undefined;
+    const radiusValid = isNum(r);
+
+    if (hasRadius && !radiusValid) {
+      errors.push("Radius 'r' must be a number");
+    }
+
+    if (radiusValid && r !== 0 && r < LIMITS.MIN_RADIUS) {
+      errors.push(`Radius 'r' must be 0 or at least ${LIMITS.MIN_RADIUS}mm`);
+    }
+
+    const currentR = radiusValid ? r : null;
+    const minExtension = currentR === 0 ? LIMITS.MIN_EXTENSION_ZERO_R : LIMITS.MIN_EXTENSION;
+
+    if (e !== undefined) {
+      if (!isNum(e) || e < minExtension) {
+        const suffix = currentR === 0 ? " when r = 0" : '';
+        errors.push(`Dimension 'e' must be >= ${minExtension}mm${suffix}`);
+      }
+    }
+
+    if (f !== undefined) {
+      if (!isNum(f) || f < minExtension) {
+        const suffix = currentR === 0 ? " when r = 0" : '';
+        errors.push(`Dimension 'f' must be >= ${minExtension}mm${suffix}`);
+      }
+    }
   }
 
   if (symbol === 'QBR1a') {

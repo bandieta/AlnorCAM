@@ -133,9 +133,9 @@ function App() {
       dimensions.a = 300;
       dimensions.b = 300;
       dimensions.d = 400;
-      dimensions.e = 50;
-      dimensions.f = 50;
-      dimensions.r = 150;
+      dimensions.e = 30;
+      dimensions.f = 30;
+      dimensions.r = 120;
       dimensions.alfa = 90;
     } else if (symbol === 'QBR1a') {
       dimensions.a = 300;

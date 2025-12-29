@@ -314,6 +314,160 @@ const ShapeGeometries = {
     return geometry;
   },
 
+  QBRa: (dims) => {
+    const {
+      a = 300,
+      b = 300,
+      d = 400,
+      e = 30,
+      f = 30,
+      r = 120,
+      alfa = 90
+    } = dims;
+
+    const alfaClamped = Math.max(15, Math.min(90, alfa || 90));
+    const alfaRad = THREE.MathUtils.degToRad(alfaClamped);
+    const sinA = Math.sin(alfaRad);
+    const cosA = Math.cos(alfaRad);
+    const tanA = Math.tan(alfaRad);
+    const tanHalf = Math.tan(alfaRad / 2);
+
+    if (!isFinite(tanA) || !isFinite(tanHalf) || Math.abs(tanHalf) < 1e-9) {
+      return createDefaultGeometry(dims);
+    }
+
+    const ctg1 = 1 / tanA;
+    const x1 = ctg1 * (d / cosA - b + r * (1 / cosA - 1));
+    let r1 = x1 / tanHalf;
+
+    if (!isFinite(r1)) {
+      r1 = Math.max(d, b);
+    }
+
+    let maxDim = Math.max(a, b, d, e + b + r, f, Math.abs(r1));
+    if (!isFinite(maxDim) || maxDim <= 0) {
+      return createDefaultGeometry(dims);
+    }
+
+    const na = a / maxDim;
+    const nb = b / maxDim;
+    const nd = d / maxDim;
+    const ne = e / maxDim;
+    const nf = f / maxDim;
+    const nr = r / maxDim;
+    const nr1 = r1 / maxDim;
+
+    const dx = (sinA * ne + nr + nb) / 2;
+    const dy = (sinA * nd + cosA * ne + sinA * nr + nf) / 2;
+
+    const points = [];
+    const setPoint = (index, x, y, z) => {
+      points[index] = [x, y, z];
+    };
+
+    const frontY = sinA * nd + cosA * ne + sinA * nr + nf - dy;
+    const backY = sinA * nd + cosA * ne + sinA * nr - dy;
+    const baseX = sinA * ne + cosA * nr - dx;
+    const baseXRight = baseX + nb;
+
+    setPoint(0, baseX, frontY, -na / 2);
+    setPoint(1, baseXRight, frontY, -na / 2);
+    setPoint(2, baseXRight, frontY, na / 2);
+    setPoint(3, baseX, frontY, na / 2);
+
+    setPoint(4, baseX, backY, -na / 2);
+    setPoint(5, baseXRight, backY, -na / 2);
+    setPoint(6, baseXRight, backY, na / 2);
+    setPoint(7, baseX, backY, na / 2);
+
+    const innerArcX = baseX - nr + cosA * nr;
+    const innerArcY = backY - sinA * nr;
+    setPoint(8, innerArcX, innerArcY, -na / 2);
+    setPoint(9, innerArcX, innerArcY, na / 2);
+
+    const outerEndX = innerArcX + cosA * nd;
+    const outerEndY = innerArcY - sinA * nd;
+    setPoint(10, outerEndX, outerEndY, na / 2);
+    setPoint(11, outerEndX, outerEndY, -na / 2);
+
+    const innerEndX = innerArcX - sinA * ne;
+    const innerEndY = innerArcY - cosA * ne;
+    setPoint(12, innerEndX, innerEndY, -na / 2);
+    setPoint(13, innerEndX, innerEndY, na / 2);
+
+    const outerExtX = outerEndX - sinA * ne;
+    const outerExtY = outerEndY - cosA * ne;
+    setPoint(14, outerExtX, outerExtY, na / 2);
+    setPoint(15, outerExtX, outerExtY, -na / 2);
+
+    const outerBaseX = baseXRight - nr1 + cosA * nr1;
+    const outerBaseY = backY - sinA * nr1;
+    setPoint(16, outerBaseX, outerBaseY, -na / 2);
+    setPoint(17, outerBaseX, outerBaseY, na / 2);
+
+    const arcAnglesDeg = [];
+    for (let step = 15; step <= 90; step += 15) {
+      arcAnglesDeg.push(Math.min(step, alfaClamped));
+    }
+
+    const p4 = points[4];
+    const p5 = points[5];
+
+    for (let ii = 0; ii < arcAnglesDeg.length; ii++) {
+      const angleRad = THREE.MathUtils.degToRad(arcAnglesDeg[ii]);
+      const cosSeg = Math.cos(angleRad);
+      const sinSeg = Math.sin(angleRad);
+
+      const innerX = p4[0] - nr + cosSeg * nr;
+      const innerY = p4[1] - sinSeg * nr;
+      const outerX = p5[0] - nr1 + cosSeg * nr1;
+      const outerY = p5[1] - sinSeg * nr1;
+
+      setPoint(20 + ii, innerX, innerY, -na / 2);
+      setPoint(30 + ii, outerX, outerY, -na / 2);
+      setPoint(40 + ii, innerX, innerY, na / 2);
+      setPoint(50 + ii, outerX, outerY, na / 2);
+    }
+
+    const alfaInt = Math.round(alfaClamped);
+    let loopAlfa = alfaInt === 90 ? 75 : alfaInt;
+    if (loopAlfa < 15) {
+      loopAlfa = 15;
+    }
+    let segmentCount = Math.max(1, Math.floor(loopAlfa / 15));
+    segmentCount = Math.min(segmentCount, arcAnglesDeg.length - 1);
+
+    const faces = [
+      [0, 1, 5, 4],
+      [1, 2, 6, 5],
+      [3, 2, 6, 7],
+      [0, 3, 7, 4],
+      [12, 8, 11, 15],
+      [11, 10, 14, 15],
+      [9, 10, 14, 13],
+      [12, 8, 9, 13],
+      [11, 16, 17, 10],
+      [8, 11, 16],
+      [9, 10, 17]
+    ];
+
+    for (let i = 0; i < segmentCount; i++) {
+      faces.push([20 + i, 20 + i + 1, 30 + i + 1, 30 + i]);
+      faces.push([40 + i, 40 + i + 1, 50 + i + 1, 50 + i]);
+      faces.push([20 + i, 20 + i + 1, 40 + i + 1, 40 + i]);
+      faces.push([30 + i, 30 + i + 1, 50 + i + 1, 50 + i]);
+    }
+
+    faces.push([4, 20, 30, 5]);
+    faces.push([7, 40, 50, 6]);
+    faces.push([4, 20, 40, 7]);
+    faces.push([5, 30, 50, 6]);
+
+    const geometry = createBufferGeometry(points, faces);
+    geometry.center();
+    return geometry;
+  },
+
   QPR6a: (dims) => {
     const { a = 400, b = 350, c = 100, d = 100, L = 500, h = 60, m = 60 } = dims;
     
