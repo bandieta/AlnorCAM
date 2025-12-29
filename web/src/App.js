@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ElementsList from './components/ElementsList';
 import ElementEditor from './components/ElementEditor';
 import Viewer3D from './components/Viewer3D';
@@ -46,6 +46,29 @@ function App() {
   const [isViewerOpen, setIsViewerOpen] = useState(true);
   const [isDrawingOpen, setIsDrawingOpen] = useState(true);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [viewerElements, setViewerElements] = useState(elements);
+  const [viewerSelectedId, setViewerSelectedId] = useState(selectedId);
+
+  // Debounce viewer payload updates to keep the editor responsive while typing.
+  useEffect(() => {
+    const debounceHandle = setTimeout(() => {
+      setViewerElements(prev => (prev === elements ? prev : elements));
+      setViewerSelectedId(prev => (prev === selectedId ? prev : selectedId));
+    }, 140);
+
+    return () => clearTimeout(debounceHandle);
+  }, [elements, selectedId]);
+
+  // Nudge the Three.js renderer after the panel becomes visible again.
+  useEffect(() => {
+    if (!isViewerOpen) {
+      return undefined;
+    }
+    const raf = requestAnimationFrame(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isViewerOpen]);
 
   const selectedElement = elements.find(el => el.id === selectedId);
   const selectedArea = selectedElement ? calculateArea(selectedElement.symbol, selectedElement.dimensions) : null;
@@ -248,7 +271,7 @@ function App() {
                 <div className={`collapsible-panel viewer-block ${isViewerOpen ? 'open' : 'collapsed'}`}>
                   <div className="collapsible-header">
                     <div className="collapsible-title-group">
-                      <span className="collapsible-title"> </span>
+                      <span className="collapsible-title">Wizualizacja 3D</span>
                       <button
                         type="button"
                         className={`mode-toggle ${showImagePreview ? 'is-image' : 'is-3d'}`}
@@ -269,27 +292,37 @@ function App() {
                       className="collapse-control"
                       onClick={() => setIsViewerOpen(!isViewerOpen)}
                       aria-expanded={isViewerOpen}
-                      aria-controls={isViewerOpen ? 'viewer-content' : undefined}
+                      aria-controls="viewer-content"
                       title={isViewerOpen ? 'Zwiń sekcję wizualizacji' : 'Rozwiń sekcję wizualizacji'}
                     >
                       <span className="collapsible-icon" aria-hidden="true">{isViewerOpen ? '▲' : '▼'}</span>
                     </button>
                   </div>
-                  {isViewerOpen && (
-                    <div id="viewer-content" className="collapsible-content">
-                      <div className="viewer-stage">
-                        {showImagePreview ? (
-                          <img
-                            src={previewImage}
-                            alt="Podgląd elementu w formie zdjęcia"
-                            className="viewer-image"
-                          />
-                        ) : (
-                          <Viewer3D elements={elements} selectedId={selectedId} />
-                        )}
+                  <div
+                    id="viewer-content"
+                    className="collapsible-content"
+                    hidden={!isViewerOpen}
+                    aria-hidden={!isViewerOpen}
+                  >
+                    <div className={`viewer-stage ${showImagePreview ? 'mode-image' : 'mode-3d'}`}>
+                      <div
+                        className={`viewer-stage-layer viewer-stage-layer--3d ${showImagePreview ? 'is-hidden' : 'is-active'}`}
+                        aria-hidden={showImagePreview}
+                      >
+                        <Viewer3D elements={viewerElements} selectedId={viewerSelectedId} />
+                      </div>
+                      <div
+                        className={`viewer-stage-layer viewer-stage-layer--image ${showImagePreview ? 'is-active' : 'is-hidden'}`}
+                        aria-hidden={!showImagePreview}
+                      >
+                        <img
+                          src={previewImage}
+                          alt="Podgląd elementu w formie zdjęcia"
+                          className="viewer-image"
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className={`collapsible-panel drawing-block ${isDrawingOpen ? 'open' : 'collapsed'}`}>
@@ -302,17 +335,20 @@ function App() {
                       className="collapse-control"
                       onClick={() => setIsDrawingOpen(!isDrawingOpen)}
                       aria-expanded={isDrawingOpen}
-                      aria-controls={isDrawingOpen ? 'drawing-content' : undefined}
+                      aria-controls="drawing-content"
                       title={isDrawingOpen ? 'Zwiń sekcję rysunku' : 'Rozwiń sekcję rysunku'}
                     >
                       <span className="collapsible-icon" aria-hidden="true">{isDrawingOpen ? '▲' : '▼'}</span>
                     </button>
                   </div>
-                  {isDrawingOpen && (
-                    <div id="drawing-content" className="collapsible-content">
-                      <TechnicalDrawing selectedElement={selectedElement} />
-                    </div>
-                  )}
+                  <div
+                    id="drawing-content"
+                    className="collapsible-content"
+                    hidden={!isDrawingOpen}
+                    aria-hidden={!isDrawingOpen}
+                  >
+                    <TechnicalDrawing selectedElement={selectedElement} />
+                  </div>
                 </div>
               </div>
             </section>
