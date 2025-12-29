@@ -96,6 +96,73 @@ const createBufferGeometry = (points, faces) => {
   return geometry;
 };
 
+// Ensure quad and triangle faces point outward for consistent lighting
+const orientFacesOutward = (points, faces) => {
+  const definedPoints = points.filter(Boolean);
+  if (!definedPoints.length) {
+    return faces.filter(face => Array.isArray(face) && face.length >= 3 && face.every(idx => points[idx]));
+  }
+
+  const center = definedPoints
+    .reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]], [0, 0, 0])
+    .map(v => v / definedPoints.length);
+
+  const oriented = [];
+
+  faces.forEach(face => {
+    if (!Array.isArray(face) || face.length < 3) {
+      return;
+    }
+    if (!face.every(idx => points[idx])) {
+      return;
+    }
+
+    const p0 = points[face[0]];
+    const p1 = points[face[1]];
+    const p2 = points[face[2]];
+
+    const v1 = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
+    const v2 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
+
+    const normal = [
+      v1[1] * v2[2] - v1[2] * v2[1],
+      v1[2] * v2[0] - v1[0] * v2[2],
+      v1[0] * v2[1] - v1[1] * v2[0]
+    ];
+
+    const length = Math.hypot(normal[0], normal[1], normal[2]);
+    if (length === 0) {
+      oriented.push(face);
+      return;
+    }
+
+    const unitNormal = normal.map(n => n / length);
+
+    const centroid = face
+      .reduce((acc, idx) => {
+        const p = points[idx];
+        return [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]];
+      }, [0, 0, 0])
+      .map(v => v / face.length);
+
+    const toCentroid = [
+      centroid[0] - center[0],
+      centroid[1] - center[1],
+      centroid[2] - center[2]
+    ];
+
+    const dot = unitNormal[0] * toCentroid[0] + unitNormal[1] * toCentroid[1] + unitNormal[2] * toCentroid[2];
+
+    if (dot >= 0) {
+      oriented.push(face);
+    } else {
+      oriented.push([face[0], ...face.slice(1).reverse()]);
+    }
+  });
+
+  return oriented;
+};
+
 // Shape geometry builders based on glDraw() calculations
 const ShapeGeometries = {
   QDa: (dims) => {
@@ -687,8 +754,8 @@ const ShapeGeometries = {
       a = 300,
       b = 300,
       d = 400,
-      e = 30,
-      f = 30,
+      e = 150,
+      f = 150,
       r = 120
     } = dims;
 
@@ -803,49 +870,123 @@ const ShapeGeometries = {
       [25, 8, 11, 35]
     ];
 
-    const definedPoints = points.filter(Boolean);
-    const center = definedPoints.reduce(
-      (acc, p) => [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]],
-      [0, 0, 0]
-    ).map(v => v / definedPoints.length);
+    const orientedFaces = orientFacesOutward(points, faces);
+    const geometry = createBufferGeometry(points, orientedFaces);
+    geometry.center();
+    return geometry;
+  },
 
-    const orientedFaces = faces.map(face => {
-      if (face.length < 3) return face;
-      const p0 = points[face[0]];
-      const p1 = points[face[1]];
-      const p2 = points[face[2]];
-      if (!p0 || !p1 || !p2) return face;
+  QBFa: (dims) => {
+    const {
+      a = 300,
+      b = 300,
+      e = 150,
+      f = 150,
+      r = 100
+    } = dims;
 
-      const v1 = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
-      const v2 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
-      const normal = [
-        v1[1] * v2[2] - v1[2] * v2[1],
-        v1[2] * v2[0] - v1[0] * v2[2],
-        v1[0] * v2[1] - v1[1] * v2[0]
-      ];
-      const length = Math.hypot(normal[0], normal[1], normal[2]) || 1;
-      const unitNormal = normal.map(n => n / length);
+    const d = b;
 
-      const centroid = face.reduce(
-        (acc, idx) => {
-          const p = points[idx];
-          return [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]];
-        },
-        [0, 0, 0]
-      ).map(v => v / face.length);
+    let max = Math.max(a, b + e, d + f, e, f, r);
+    if (max === 0) max = 1;
 
-      const toCentroid = [
-        centroid[0] - center[0],
-        centroid[1] - center[1],
-        centroid[2] - center[2]
-      ];
-      const dot = unitNormal[0] * toCentroid[0] + unitNormal[1] * toCentroid[1] + unitNormal[2] * toCentroid[2];
+    const na = a / max;
+    const nb = b / max;
+    const nd = d / max;
+    const ne = e / max;
+    const nf = f / max;
+    const nr = r / max;
 
-      return dot >= 0 ? face : [face[0], face[3], face[2], face[1]];
-    });
+    const dx = (ne + nb) / 2.0;
+    const dy = (nd + nf) / 2.0;
 
-    const filteredFaces = orientedFaces.filter(face => face.every(idx => points[idx]));
-    const geometry = createBufferGeometry(points, filteredFaces);
+    const points = Array(40).fill(null);
+    const setPoint = (idx, x, y, z) => {
+      points[idx] = [x, y, z];
+    };
+
+    setPoint(0, ne - dx, nd + nf - dy, -na / 2);
+    setPoint(1, ne + nb - dx, nd + nf - dy, -na / 2);
+    setPoint(2, ne + nb - dx, nd + nf - dy, na / 2);
+    setPoint(3, ne - dx, nd + nf - dy, na / 2);
+
+    setPoint(4, -dx, -dy, -na / 2);
+    setPoint(5, ne + nb - dx, -dy, -na / 2);
+    setPoint(6, ne + nb - dx, -dy, na / 2);
+    setPoint(7, -dx, -dy, na / 2);
+
+    setPoint(8, ne - dx, nd + nr - dy, -na / 2);
+    setPoint(9, ne + nb - dx, nd + nr - dy, -na / 2);
+    setPoint(10, ne + nb - dx, nd + nr - dy, na / 2);
+    setPoint(11, ne - dx, nd + nr - dy, na / 2);
+
+    setPoint(12, ne - nr - dx, nd - dy, -na / 2);
+    setPoint(13, ne - nr - dx, nd - dy, na / 2);
+    setPoint(14, ne - nr - dx, -dy, na / 2);
+    setPoint(15, ne - nr - dx, -dy, -na / 2);
+    setPoint(16, -dx, nd - dy, -na / 2);
+    setPoint(17, -dx, nd - dy, na / 2);
+
+    setPoint(21, points[15][0] + (nb + nr) / 3.0, points[15][1], -na / 2);
+    setPoint(22, points[15][0] + 2 * (nb + nr) / 3.0, points[15][1], -na / 2);
+    setPoint(23, points[5][0], points[5][1] + (nd + nr) / 3.0, -na / 2);
+    setPoint(24, points[5][0], points[5][1] + 2 * (nd + nr) / 3.0, -na / 2);
+
+    for (let i = 0; i < 5; i++) {
+      const angle = (75 - 15 * i) * Math.PI / 180.0;
+      const x = points[12][0] + Math.cos(angle) * nr;
+      const y = points[12][1] + nr - Math.sin(angle) * nr;
+      const idx = 29 - i;
+      setPoint(idx, x, y, -na / 2);
+    }
+
+    setPoint(31, points[15][0] + (nb + nr) / 3.0, points[15][1], na / 2);
+    setPoint(32, points[15][0] + 2 * (nb + nr) / 3.0, points[15][1], na / 2);
+    setPoint(33, points[5][0], points[5][1] + (nd + nr) / 3.0, na / 2);
+    setPoint(34, points[5][0], points[5][1] + 2 * (nd + nr) / 3.0, na / 2);
+
+    for (let i = 0; i < 5; i++) {
+      const angle = (75 - 15 * i) * Math.PI / 180.0;
+      const x = points[12][0] + Math.cos(angle) * nr;
+      const y = points[12][1] + nr - Math.sin(angle) * nr;
+      const idx = 39 - i;
+      setPoint(idx, x, y, na / 2);
+    }
+
+    const faces = [
+      [4, 7, 6, 5],
+      [5, 6, 2, 1],
+      [4, 15, 12, 16],
+      [8, 9, 1, 0],
+      [7, 14, 13, 17],
+      [11, 10, 2, 3],
+      [12, 13, 17, 16],
+      [8, 11, 3, 0],
+
+      [15, 21, 29, 12],
+      [21, 22, 28, 29],
+      [22, 5, 27, 28],
+      [5, 23, 26, 27],
+      [23, 24, 25, 26],
+      [24, 9, 8, 25],
+
+      [14, 31, 39, 13],
+      [31, 32, 38, 39],
+      [32, 6, 37, 38],
+      [6, 33, 36, 37],
+      [33, 34, 35, 36],
+      [34, 10, 11, 35],
+
+      [12, 29, 39, 13],
+      [29, 28, 38, 39],
+      [28, 27, 37, 38],
+      [27, 26, 36, 37],
+      [26, 25, 35, 36],
+      [25, 8, 11, 35]
+    ];
+
+    const orientedFaces = orientFacesOutward(points, faces);
+    const geometry = createBufferGeometry(points, orientedFaces);
     geometry.center();
     return geometry;
   },

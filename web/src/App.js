@@ -151,15 +151,15 @@ function App() {
       dimensions.a = 300;
       dimensions.b = 300;
       dimensions.d = 400;
-      dimensions.e = 30;
-      dimensions.f = 30;
+      dimensions.e = 150;
+      dimensions.f = 150;
       dimensions.r = 120;
     } else if (symbol === 'QBFa') {
       dimensions.a = 300;
       dimensions.b = 300;
       dimensions.e = 150;
       dimensions.f = 150;
-      dimensions.r = 120;
+      dimensions.r = 100;
     } else if (symbol === 'QESa') {
       dimensions.a = 400;
       dimensions.b = 300;
