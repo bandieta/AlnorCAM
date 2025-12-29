@@ -377,6 +377,83 @@ const ShapeGeometries = {
     return createBufferGeometry(points, faces);
   },
 
+      QPR2a: (dims) => {
+        const {
+          a = 400,
+          b = 350,
+          c = 200,
+          d = 200,
+          e = 0,
+          f = 0,
+          L = 500,
+          h = 60,
+          m = 60
+        } = dims;
+
+        let max = Math.max(a, b, c, d, L, h, m);
+        max = Math.max(max, Math.abs(e));
+        max = Math.max(max, Math.abs(f));
+
+        if (max === 0) {
+          return createDefaultGeometry(dims);
+        }
+
+        const na = a / max;
+        const nb = b / max;
+        const nc = c / max;
+        const nd = d / max;
+        let ne = e / max;
+        let nf = f / max;
+        const nL = L / max;
+        const nh = h / max;
+        const nm = m / max;
+
+        // Legacy OpenGL mirrored offsets
+        ne = -ne;
+        nf = -nf;
+
+        const zUpper = -nL / 2 + nh;
+        const zLower = -nL / 2;
+        const zInner = nL / 2 - nm;
+        const zEnd = nL / 2;
+
+        const points = [
+          [-na / 2, nb / 2, zUpper],
+          [na / 2, nb / 2, zUpper],
+          [na / 2, -nb / 2, zUpper],
+          [-na / 2, -nb / 2, zUpper],
+          [-na / 2, nb / 2, zLower],
+          [na / 2, nb / 2, zLower],
+          [na / 2, -nb / 2, zLower],
+          [-na / 2, -nb / 2, zLower],
+          [-na / 2 + nf, nb / 2 - ne, zInner],
+          [-na / 2 + nf + nc, nb / 2 - ne, zInner],
+          [-na / 2 + nf + nc, nb / 2 - nd - ne, zInner],
+          [-na / 2 + nf, nb / 2 - nd - ne, zInner],
+          [-na / 2 + nf, nb / 2 - ne, zEnd],
+          [-na / 2 + nf + nc, nb / 2 - ne, zEnd],
+          [-na / 2 + nf + nc, nb / 2 - nd - ne, zEnd],
+          [-na / 2 + nf, nb / 2 - nd - ne, zEnd]
+        ];
+
+        const faces = [
+          [0, 4, 7, 3],
+          [0, 4, 5, 1],
+          [1, 5, 6, 2],
+          [6, 2, 3, 7],
+          [8, 0, 3, 11],
+          [0, 1, 9, 8],
+          [9, 1, 2, 10],
+          [11, 3, 2, 10],
+          [12, 8, 11, 15],
+          [12, 8, 9, 13],
+          [13, 9, 10, 14],
+          [15, 11, 10, 14]
+        ];
+
+        return createBufferGeometry(points, faces);
+      },
+
   PR1a: (dims) => {
     const { a = 10, b = 10, d = 5, L = 12, h = 3, m = 4 } = dims;
     const max = Math.max(a, b, d, L, h, m);
@@ -704,7 +781,7 @@ function Viewer3D({ elements, selectedId }) {
     controls.zoomSpeed = 1.2;
     controls.panSpeed = 0.8;
     controls.noZoom = false;
-    controls.noPan = false;
+    controls.noPan = true;
     controls.staticMoving = false;
     controls.dynamicDampingFactor = 0.1;
     controls.minDistance = 0.1; // Allow very close zoom
@@ -748,13 +825,6 @@ function Viewer3D({ elements, selectedId }) {
 
     // Galvanized Texture
     galvanizedTextureRef.current = createGalvanizedTexture();
-
-    // Grid and axes helpers
-    const gridHelper = new THREE.GridHelper(200, 20, 0xcccccc, 0xeeeeee);
-    scene.add(gridHelper);
-
-    const axesHelper = new THREE.AxesHelper(50);
-    scene.add(axesHelper);
 
     // Handle window resize
     const handleResize = () => {
