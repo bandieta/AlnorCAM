@@ -24,10 +24,18 @@
   color: rgba(12, 46, 86, 0.6);
 }
 
+.technical-drawing-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: stretch;
+}
+
 .technical-drawing-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 14px;
+  flex: 1 1 220px;
 }
 
 .technical-drawing-field {
@@ -61,4 +69,65 @@
   color: rgba(12, 46, 86, 0.65);
   font-size: 14px;
   text-align: center;
+}
+
+.technical-drawing-visual {
+  flex: 1 1 280px;
+  min-width: 240px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(12, 46, 86, 0.04);
+  border: 1px solid rgba(12, 46, 86, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.technical-drawing-svg {
+  max-width: 420px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 21 / 11;
+}
+
+.technical-drawing-caption {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: rgba(12, 46, 86, 0.55);
+}
+
+.technical-drawing-outer {
+  stroke: var(--navy-700);
+  stroke-width: 1.4;
+  fill: rgba(26, 183, 234, 0.08);
+}
+
+.technical-drawing-inner {
+  stroke: var(--navy-800);
+  stroke-width: 1.4;
+  fill: rgba(12, 46, 86, 0.05);
+}
+
+.technical-dimension {
+  stroke: rgba(12, 46, 86, 0.6);
+  stroke-width: 1.2;
+}
+
+.technical-dimension-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  fill: var(--navy-800);
+}
+
+@media (max-width: 720px) {
+  .technical-drawing-layout {
+    flex-direction: column;
+  }
+
+  .technical-drawing-visual {
+    min-height: 220px;
+  }
 }
