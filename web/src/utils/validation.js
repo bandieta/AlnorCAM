@@ -117,13 +117,12 @@ export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
   }
 
   if (symbol === 'QBR1a') {
-    // b <= d (Width reduction)
-    if (b !== undefined && d !== undefined && b > d) {
-      errors.push("Dimension 'b' must be <= 'd'");
-    }
     // alfa 15-90
     if (alfa !== undefined && (alfa < 15 || alfa > 90)) {
       errors.push("Angle 'alfa' must be between 15 and 90 degrees");
+    }
+    if (r !== undefined && r < LIMITS.MIN_RADIUS) {
+      errors.push(`Radius 'r' must be at least ${LIMITS.MIN_RADIUS}mm`);
     }
   }
 

@@ -139,14 +139,21 @@ function App() {
       dimensions.alfa = 90;
     } else if (symbol === 'QBR1a') {
       dimensions.a = 300;
+      dimensions.b = 200;
+      dimensions.c = 200;
+      dimensions.d = 150;
+      dimensions.e = 100;
+      dimensions.f = 100;
+      dimensions.r = 120;
+      dimensions.alfa = 70;
+      dimensions.g = 50;
+    } else if (symbol === 'QBFRa') {
+      dimensions.a = 300;
       dimensions.b = 300;
-      dimensions.c = 300;
       dimensions.d = 400;
-      dimensions.e = 50;
-      dimensions.f = 50;
-      dimensions.r = 150;
-      dimensions.g = 0;
-      dimensions.alfa = 90;
+      dimensions.e = 30;
+      dimensions.f = 30;
+      dimensions.r = 120;
     } else if (symbol === 'QBFa') {
       dimensions.a = 300;
       dimensions.b = 300;

@@ -327,25 +327,26 @@ const ShapeGeometries = {
 
     const alfaClamped = Math.max(15, Math.min(90, alfa || 90));
     const alfaRad = THREE.MathUtils.degToRad(alfaClamped);
+
     const sinA = Math.sin(alfaRad);
     const cosA = Math.cos(alfaRad);
     const tanA = Math.tan(alfaRad);
     const tanHalf = Math.tan(alfaRad / 2);
 
-    if (!isFinite(tanA) || !isFinite(tanHalf) || Math.abs(tanHalf) < 1e-9) {
-      return createDefaultGeometry(dims);
-    }
+    const safeTan = Math.abs(tanA) < 1e-9 ? (tanA >= 0 ? 1e-9 : -1e-9) : tanA;
+    const safeTanHalf = Math.abs(tanHalf) < 1e-9 ? (tanHalf >= 0 ? 1e-9 : -1e-9) : tanHalf;
+    const safeCos = Math.abs(cosA) < 1e-9 ? (cosA >= 0 ? 1e-9 : -1e-9) : cosA;
 
-    const ctg1 = 1 / tanA;
-    const x1 = ctg1 * (d / cosA - b + r * (1 / cosA - 1));
-    let r1 = x1 / tanHalf;
+    const ctg1 = 1 / safeTan;
+    const x1 = ctg1 * (d / safeCos - b + r * (1 / safeCos - 1));
+    let r1 = x1 / safeTanHalf;
 
-    if (!isFinite(r1)) {
+    if (!Number.isFinite(r1)) {
       r1 = Math.max(d, b);
     }
 
     let maxDim = Math.max(a, b, d, e + b + r, f, Math.abs(r1));
-    if (!isFinite(maxDim) || maxDim <= 0) {
+    if (!Number.isFinite(maxDim) || maxDim <= 0) {
       return createDefaultGeometry(dims);
     }
 
@@ -360,38 +361,38 @@ const ShapeGeometries = {
     const dx = (sinA * ne + nr + nb) / 2;
     const dy = (sinA * nd + cosA * ne + sinA * nr + nf) / 2;
 
-    const points = [];
-    const setPoint = (index, x, y, z) => {
-      points[index] = [x, y, z];
+    const points = Array(60).fill(null);
+    const setPoint = (idx, x, y, z) => {
+      points[idx] = [x, y, z];
     };
 
-    const frontY = sinA * nd + cosA * ne + sinA * nr + nf - dy;
-    const backY = sinA * nd + cosA * ne + sinA * nr - dy;
     const baseX = sinA * ne + cosA * nr - dx;
+    const baseYFront = sinA * nd + cosA * ne + sinA * nr + nf - dy;
+    const baseYBack = sinA * nd + cosA * ne + sinA * nr - dy;
     const baseXRight = baseX + nb;
 
-    setPoint(0, baseX, frontY, -na / 2);
-    setPoint(1, baseXRight, frontY, -na / 2);
-    setPoint(2, baseXRight, frontY, na / 2);
-    setPoint(3, baseX, frontY, na / 2);
+    setPoint(0, baseX, baseYFront, -na / 2);
+    setPoint(1, baseXRight, baseYFront, -na / 2);
+    setPoint(2, baseXRight, baseYFront, na / 2);
+    setPoint(3, baseX, baseYFront, na / 2);
 
-    setPoint(4, baseX, backY, -na / 2);
-    setPoint(5, baseXRight, backY, -na / 2);
-    setPoint(6, baseXRight, backY, na / 2);
-    setPoint(7, baseX, backY, na / 2);
+    setPoint(4, baseX, baseYBack, -na / 2);
+    setPoint(5, baseXRight, baseYBack, -na / 2);
+    setPoint(6, baseXRight, baseYBack, na / 2);
+    setPoint(7, baseX, baseYBack, na / 2);
 
-    const innerArcX = baseX - nr + cosA * nr;
-    const innerArcY = backY - sinA * nr;
-    setPoint(8, innerArcX, innerArcY, -na / 2);
-    setPoint(9, innerArcX, innerArcY, na / 2);
+    const innerBaseX = points[4][0] - nr + cosA * nr;
+    const innerBaseY = points[4][1] - sinA * nr;
+    setPoint(8, innerBaseX, innerBaseY, -na / 2);
+    setPoint(9, innerBaseX, innerBaseY, na / 2);
 
-    const outerEndX = innerArcX + cosA * nd;
-    const outerEndY = innerArcY - sinA * nd;
+    const outerEndX = innerBaseX + cosA * nd;
+    const outerEndY = innerBaseY - sinA * nd;
     setPoint(10, outerEndX, outerEndY, na / 2);
     setPoint(11, outerEndX, outerEndY, -na / 2);
 
-    const innerEndX = innerArcX - sinA * ne;
-    const innerEndY = innerArcY - cosA * ne;
+    const innerEndX = innerBaseX - sinA * ne;
+    const innerEndY = innerBaseY - cosA * ne;
     setPoint(12, innerEndX, innerEndY, -na / 2);
     setPoint(13, innerEndX, innerEndY, na / 2);
 
@@ -400,28 +401,20 @@ const ShapeGeometries = {
     setPoint(14, outerExtX, outerExtY, na / 2);
     setPoint(15, outerExtX, outerExtY, -na / 2);
 
-    const outerBaseX = baseXRight - nr1 + cosA * nr1;
-    const outerBaseY = backY - sinA * nr1;
+    const outerBaseX = points[5][0] - nr1 + cosA * nr1;
+    const outerBaseY = points[5][1] - sinA * nr1;
     setPoint(16, outerBaseX, outerBaseY, -na / 2);
     setPoint(17, outerBaseX, outerBaseY, na / 2);
 
-    const arcAnglesDeg = [];
-    for (let step = 15; step <= 90; step += 15) {
-      arcAnglesDeg.push(Math.min(step, alfaClamped));
-    }
+    for (let ii = 0; ii < 6; ii++) {
+      const angle = THREE.MathUtils.degToRad(15 + 15 * ii);
+      const cosSeg = Math.cos(angle);
+      const sinSeg = Math.sin(angle);
 
-    const p4 = points[4];
-    const p5 = points[5];
-
-    for (let ii = 0; ii < arcAnglesDeg.length; ii++) {
-      const angleRad = THREE.MathUtils.degToRad(arcAnglesDeg[ii]);
-      const cosSeg = Math.cos(angleRad);
-      const sinSeg = Math.sin(angleRad);
-
-      const innerX = p4[0] - nr + cosSeg * nr;
-      const innerY = p4[1] - sinSeg * nr;
-      const outerX = p5[0] - nr1 + cosSeg * nr1;
-      const outerY = p5[1] - sinSeg * nr1;
+      const innerX = points[4][0] - nr + cosSeg * nr;
+      const innerY = points[4][1] - sinSeg * nr;
+      const outerX = points[5][0] - nr1 + cosSeg * nr1;
+      const outerY = points[5][1] - sinSeg * nr1;
 
       setPoint(20 + ii, innerX, innerY, -na / 2);
       setPoint(30 + ii, outerX, outerY, -na / 2);
@@ -429,41 +422,238 @@ const ShapeGeometries = {
       setPoint(50 + ii, outerX, outerY, na / 2);
     }
 
-    const alfaInt = Math.round(alfaClamped);
-    let loopAlfa = alfaInt === 90 ? 75 : alfaInt;
-    if (loopAlfa < 15) {
-      loopAlfa = 15;
+    let alfa1 = Math.floor(alfaClamped);
+    if (alfa1 === 90) {
+      alfa1 -= 15;
     }
-    let segmentCount = Math.max(1, Math.floor(loopAlfa / 15));
-    segmentCount = Math.min(segmentCount, arcAnglesDeg.length - 1);
+    let segmentCount = Math.floor(alfa1 / 15);
+    segmentCount = Math.max(segmentCount, alfaClamped >= 15 ? 1 : 0);
+    segmentCount = Math.min(segmentCount, 5);
 
     const faces = [
-      [0, 1, 5, 4],
-      [1, 2, 6, 5],
-      [3, 2, 6, 7],
-      [0, 3, 7, 4],
-      [12, 8, 11, 15],
-      [11, 10, 14, 15],
-      [9, 10, 14, 13],
-      [12, 8, 9, 13],
-      [11, 16, 17, 10],
-      [8, 11, 16],
-      [9, 10, 17]
+      // Extension f faces (Corrected winding)
+      [0, 1, 5, 4], // Back (Z-)
+      [1, 5, 6, 2], // Right (X+)
+      [3, 7, 6, 2], // Front (Z+)
+      [0, 3, 7, 4], // Left (X-)
+
+      // Extension e faces (Corrected winding)
+      [12, 8, 11, 15], // Bottom (Z-)
+      [11, 10, 14, 15], // Outer Side
+      [9, 10, 14, 13], // Top (Z+)
+      [12, 13, 9, 8], // Inner Side
+
+      // Connection faces
+      [11, 16, 17, 10], // Outer Connection
+      [8, 16, 11], // Triangle 1 (Bottom Z-)
+      [9, 10, 17]  // Triangle 2 (Top Z+)
     ];
 
     for (let i = 0; i < segmentCount; i++) {
-      faces.push([20 + i, 20 + i + 1, 30 + i + 1, 30 + i]);
-      faces.push([40 + i, 40 + i + 1, 50 + i + 1, 50 + i]);
-      faces.push([20 + i, 20 + i + 1, 40 + i + 1, 40 + i]);
-      faces.push([30 + i, 30 + i + 1, 50 + i + 1, 50 + i]);
+      faces.push([20 + i, 30 + i, 30 + i + 1, 20 + i + 1]); // Bottom Loop (Z-)
+      faces.push([40 + i, 40 + i + 1, 50 + i + 1, 50 + i]); // Top Loop (Z+)
+      faces.push([20 + i, 40 + i, 40 + i + 1, 20 + i + 1]); // Inner Loop (Inward)
+      faces.push([30 + i, 30 + i + 1, 50 + i + 1, 50 + i]); // Outer Loop (Outward)
     }
 
-    faces.push([4, 20, 30, 5]);
-    faces.push([7, 40, 50, 6]);
-    faces.push([4, 20, 40, 7]);
+    // Manual Start Connections
+    faces.push([4, 5, 30, 20]); // Bottom Start (Z-)
+    faces.push([7, 40, 50, 6]); // Top Start (Z+)
+    faces.push([4, 7, 40, 20]); // Inner Start (Inward)
+    faces.push([5, 30, 50, 6]); // Outer Start (Outward)
+    faces.push([7, 6, 50, 40]); // Top Start -> Normal +Z (Flipped from C#)
+    faces.push([4, 7, 40, 20]); // Inner Start -> Normal Inward (Flipped from C#)
+    faces.push([5, 30, 50, 6]); // Outer Start -> Normal Outward
+
+    const filteredFaces = faces.filter(face => face.every(idx => points[idx]));
+
+    const geometry = createBufferGeometry(points, filteredFaces);
+    geometry.center();
+    return geometry;
+  },
+
+  QBR1a: (dims) => {
+    const {
+      a = 300,
+      b = 200,
+      c = 200,
+      d = 150,
+      e = 100,
+      f = 100,
+      r = 120,
+      g = 50,
+      alfa = 70
+    } = dims;
+
+    const alfaClamped = Math.max(15, Math.min(90, alfa || 90));
+    const alfaRad = THREE.MathUtils.degToRad(alfaClamped);
+
+    const sinA = Math.sin(alfaRad);
+    const cosA = Math.cos(alfaRad);
+    const tanA = Math.tan(alfaRad);
+    const tanHalf = Math.tan(alfaRad / 2);
+
+    const safeTan = Math.abs(tanA) < 1e-9 ? (tanA >= 0 ? 1e-9 : -1e-9) : tanA;
+    const safeTanHalf = Math.abs(tanHalf) < 1e-9 ? (tanHalf >= 0 ? 1e-9 : -1e-9) : tanHalf;
+    const safeCos = Math.abs(cosA) < 1e-9 ? (cosA >= 0 ? 1e-9 : -1e-9) : cosA;
+
+    const ctg1 = 1 / safeTan;
+    const x1 = ctg1 * (d / safeCos - b + r * (1 / safeCos - 1));
+    let r1 = x1 / safeTanHalf;
+
+    if (!Number.isFinite(r1)) {
+      r1 = Math.max(d, b);
+    }
+
+    let maxDim = Math.max(a, b, c, d, e + b + r, f, Math.abs(r1));
+    if (!Number.isFinite(maxDim) || maxDim <= 0) {
+      return createDefaultGeometry(dims);
+    }
+
+    let gg = (a - c) / 2.0 - g;
+    if (c > a) {
+      gg = (c - a) / 2.0 + g;
+    }
+
+    const na = a / maxDim;
+    const nb = b / maxDim;
+    const nc = c / maxDim;
+    const nd = d / maxDim;
+    const ne = e / maxDim;
+    const nf = f / maxDim;
+    const nr = r / maxDim;
+    const nr1 = r1 / maxDim;
+    const ngg = gg / maxDim;
+
+    const dx = (sinA * ne + nr + nb) / 2;
+    const dy = (sinA * nd + cosA * ne + sinA * nr + nf) / 2;
+
+    const diffl = (Math.abs(na / 2.0 - nc / 2.0) - ngg) / 6.0;
+    const diffp = (Math.abs(na / 2.0 - nc / 2.0) + ngg) / 6.0;
+
+    const points = Array(60).fill(null);
+    const setPoint = (idx, x, y, z) => {
+      points[idx] = [x, y, z];
+    };
+
+    const baseX = sinA * ne + cosA * nr - dx;
+    const baseYFront = sinA * nd + cosA * ne + sinA * nr + nf - dy;
+    const baseYBack = sinA * nd + cosA * ne + sinA * nr - dy;
+    const baseXRight = baseX + nb;
+
+    setPoint(0, baseX, baseYFront, -na / 2);
+    setPoint(1, baseXRight, baseYFront, -na / 2);
+    setPoint(2, baseXRight, baseYFront, na / 2);
+    setPoint(3, baseX, baseYFront, na / 2);
+
+    setPoint(4, baseX, baseYBack, -na / 2);
+    setPoint(5, baseXRight, baseYBack, -na / 2);
+    setPoint(6, baseXRight, baseYBack, na / 2);
+    setPoint(7, baseX, baseYBack, na / 2);
+
+    const innerBaseX = points[4][0] - nr + cosA * nr;
+    const innerBaseY = points[4][1] - sinA * nr;
+    setPoint(8, innerBaseX, innerBaseY, -nc / 2 - ngg);
+    setPoint(9, innerBaseX, innerBaseY, nc / 2 - ngg);
+
+    const outerEndX = innerBaseX + cosA * nd;
+    const outerEndY = innerBaseY - sinA * nd;
+    setPoint(10, outerEndX, outerEndY, nc / 2 - ngg);
+    setPoint(11, outerEndX, outerEndY, -nc / 2 - ngg);
+
+    const innerEndX = innerBaseX - sinA * ne;
+    const innerEndY = innerBaseY - cosA * ne;
+    setPoint(12, innerEndX, innerEndY, -nc / 2 - ngg);
+    setPoint(13, innerEndX, innerEndY, nc / 2 - ngg);
+
+    const outerExtX = outerEndX - sinA * ne;
+    const outerExtY = outerEndY - cosA * ne;
+    setPoint(14, outerExtX, outerExtY, nc / 2 - ngg);
+    setPoint(15, outerExtX, outerExtY, -nc / 2 - ngg);
+
+    const outerBaseX = points[5][0] - nr1 + cosA * nr1;
+    const outerBaseY = points[5][1] - sinA * nr1;
+    
+    let z16 = -na / 2.0 + diffl * 5;
+    let z17 = na / 2.0 - diffp * 5;
+    
+    if (c > a) {
+        z16 = -na / 2.0 - diffl * 5;
+        z17 = na / 2.0 + diffp * 5;
+    }
+
+    setPoint(16, outerBaseX, outerBaseY, z16);
+    setPoint(17, outerBaseX, outerBaseY, z17);
+
+    let finalDiffl = diffl;
+    let finalDiffp = diffp;
+    if (c > a) {
+        finalDiffl = -diffl;
+        finalDiffp = -diffp;
+    }
+
+    for (let ii = 0; ii < 6; ii++) {
+      const angle = THREE.MathUtils.degToRad(15 + 15 * ii);
+      const cosSeg = Math.cos(angle);
+      const sinSeg = Math.sin(angle);
+
+      const innerX = points[4][0] - nr + cosSeg * nr;
+      const innerY = points[4][1] - sinSeg * nr;
+      const outerX = points[5][0] - nr1 + cosSeg * nr1;
+      const outerY = points[5][1] - sinSeg * nr1;
+
+      const zBottom = -na / 2.0 + finalDiffl * (ii + 1);
+      const zTop = na / 2.0 - finalDiffp * (ii + 1);
+
+      setPoint(20 + ii, innerX, innerY, zBottom);
+      setPoint(30 + ii, outerX, outerY, zBottom);
+      setPoint(40 + ii, innerX, innerY, zTop);
+      setPoint(50 + ii, outerX, outerY, zTop);
+    }
+
+    let alfa1 = Math.floor(alfaClamped);
+    if (alfa1 === 90) {
+      alfa1 -= 15;
+    }
+    let segmentCount = Math.floor(alfa1 / 15);
+    segmentCount = Math.max(segmentCount, alfaClamped >= 15 ? 1 : 0);
+    segmentCount = Math.min(segmentCount, 5);
+
+    const faces = [
+      // Extension f faces (Exact C# logic)
+      [0, 1, 5, 4], 
+      [1, 2, 6, 5], 
+      [3, 2, 6, 7], 
+      [0, 3, 7, 4], 
+
+      // Extension e faces (Exact C# logic)
+      [12, 8, 11, 15], 
+      [11, 10, 14, 15], 
+      [9, 10, 14, 13], 
+      [12, 8, 9, 13], 
+
+      // Connection faces (Exact C# logic)
+      [11, 16, 17, 10], 
+      [8, 11, 16], 
+      [9, 10, 17]  
+    ];
+
+    for (let i = 0; i < segmentCount; i++) {
+      faces.push([20 + i, 20 + i + 1, 30 + i + 1, 30 + i]); 
+      faces.push([40 + i, 40 + i + 1, 50 + i + 1, 50 + i]); 
+      faces.push([20 + i, 20 + i + 1, 40 + i + 1, 40 + i]); 
+      faces.push([30 + i, 30 + i + 1, 50 + i + 1, 50 + i]); 
+    }
+
+    // Manual Start Connections (Exact C# logic)
+    faces.push([4, 20, 30, 5]); 
+    faces.push([7, 40, 50, 6]); 
+    faces.push([4, 20, 40, 7]); 
     faces.push([5, 30, 50, 6]);
 
-    const geometry = createBufferGeometry(points, faces);
+    const filteredFaces = faces.filter(face => face.every(idx => points[idx]));
+
+    const geometry = createBufferGeometry(points, filteredFaces);
     geometry.center();
     return geometry;
   },
