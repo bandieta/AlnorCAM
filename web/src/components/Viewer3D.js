@@ -377,6 +377,218 @@ const ShapeGeometries = {
     return createBufferGeometry(points, faces);
   },
 
+  PR1a: (dims) => {
+    const { a = 10, b = 10, d = 5, L = 12, h = 3, m = 4 } = dims;
+    const max = Math.max(a, b, d, L, h, m);
+    if (max === 0) {
+      return createDefaultGeometry(dims);
+    }
+
+    const na = a / max;
+    const nb = b / max;
+    const nd = d / max;
+    const nL = L / max;
+    const nh = h / max;
+    const nm = m / max;
+
+    const halfA = na / 2;
+    const halfB = nb / 2;
+    const quarterA = na / 4;
+    const quarterB = nb / 4;
+    const radius = nd / 2;
+
+    const zRect = -nL / 2 + nh;
+    const zBottom = -nL / 2;
+    const zCircle = nL / 2;
+    const zBranchEnd = zCircle + nm;
+
+    const p0 = [-halfA, halfB, zRect];
+    const p1 = [halfA, halfB, zRect];
+    const p2 = [halfA, -halfB, zRect];
+    const p3 = [-halfA, -halfB, zRect];
+    const p4 = [-halfA, halfB, zBottom];
+    const p5 = [halfA, halfB, zBottom];
+    const p6 = [halfA, -halfB, zBottom];
+    const p7 = [-halfA, -halfB, zBottom];
+
+    const vertices = [];
+    const addTriangle = (aPoint, bPoint, cPoint) => {
+      vertices.push(...aPoint, ...bPoint, ...cPoint);
+    };
+    const addQuad = (aPoint, bPoint, cPoint, dPoint) => {
+      addTriangle(aPoint, bPoint, cPoint);
+      addTriangle(aPoint, cPoint, dPoint);
+    };
+
+    // Rectangular shell
+    addQuad(p0, p1, p5, p4); // Front
+    addQuad(p1, p2, p6, p5); // Right
+    addQuad(p2, p3, p7, p6); // Back
+    addQuad(p3, p0, p4, p7); // Left
+
+    // Anchor path along the rectangular top edge
+    const anchorPath = [
+      [0, halfB],
+      [quarterA, halfB],
+      [halfA, halfB],
+      [halfA, quarterB],
+      [halfA, 0],
+      [halfA, -quarterB],
+      [halfA, -halfB],
+      [quarterA, -halfB],
+      [0, -halfB],
+      [-quarterA, -halfB],
+      [-halfA, -halfB],
+      [-halfA, -quarterB],
+      [-halfA, 0],
+      [-halfA, quarterB],
+      [-halfA, halfB],
+      [-quarterA, halfB]
+    ].map(([x, y]) => [x, y, zRect]);
+
+    const segments = anchorPath.length;
+    const angleStep = (Math.PI * 2) / segments;
+    const angleOffset = -angleStep / 2;
+
+    const circlePoints = [];
+    for (let i = 0; i <= segments; i++) {
+      const angle = angleOffset + i * angleStep;
+      const x = Math.sin(angle) * radius;
+      const y = Math.cos(angle) * radius;
+      circlePoints.push([x, y, zCircle]);
+    }
+
+    // Loft triangles tying rectangle to circle
+    for (let i = 0; i < segments; i++) {
+      const anchorA = anchorPath[i];
+      const anchorB = anchorPath[(i + 1) % segments];
+      const circleA = circlePoints[i];
+      const circleB = circlePoints[i + 1];
+      addQuad(anchorA, anchorB, circleB, circleA);
+    }
+
+    // Cylindrical branch
+    for (let i = 0; i < segments; i++) {
+      const circleLowerA = circlePoints[i];
+      const circleLowerB = circlePoints[i + 1];
+      const circleUpperA = [circleLowerA[0], circleLowerA[1], zBranchEnd];
+      const circleUpperB = [circleLowerB[0], circleLowerB[1], zBranchEnd];
+      addQuad(circleLowerA, circleLowerB, circleUpperB, circleUpperA);
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+    return geometry;
+  },
+
+  PR7a: (dims) => {
+    const { a = 10, b = 10, d = 5, L = 12, e = 0, f = 0, h = 3, m = 4 } = dims;
+    const max = Math.max(a, b, d, L, h, m, Math.abs(e), Math.abs(f));
+    if (max === 0) {
+      return createDefaultGeometry(dims);
+    }
+
+    const na = a / max;
+    const nb = b / max;
+    const nd = d / max;
+    const nL = L / max;
+    const nh = h / max;
+    const nm = m / max;
+    const ne = -(e / max);
+    const nf = -(f / max);
+
+    const halfA = na / 2;
+    const halfB = nb / 2;
+    const radius = nd / 2;
+
+    const zRect = -nL / 2 + nh;
+    const zBottom = -nL / 2;
+    const zCircle = nL / 2;
+    const zBranchEnd = zCircle + nm;
+
+    const circleCenterX = -halfA + nf + radius;
+    const circleCenterY = halfB - ne - radius;
+
+    const points = [];
+    points.push([-halfA, halfB, zRect]); // 0
+    points.push([halfA, halfB, zRect]);  // 1
+    points.push([halfA, -halfB, zRect]); // 2
+    points.push([-halfA, -halfB, zRect]); // 3
+    points.push([-halfA, halfB, zBottom]); // 4
+    points.push([halfA, halfB, zBottom]);  // 5
+    points.push([halfA, -halfB, zBottom]); // 6
+    points.push([-halfA, -halfB, zBottom]); // 7
+
+    const vertices = [];
+    const addTriangle = (aPoint, bPoint, cPoint) => {
+      vertices.push(...aPoint, ...bPoint, ...cPoint);
+    };
+    const addQuad = (aPoint, bPoint, cPoint, dPoint) => {
+      addTriangle(aPoint, bPoint, cPoint);
+      addTriangle(aPoint, cPoint, dPoint);
+    };
+
+    addQuad(points[0], points[1], points[5], points[4]);
+    addQuad(points[1], points[2], points[6], points[5]);
+    addQuad(points[2], points[3], points[7], points[6]);
+    addQuad(points[3], points[0], points[4], points[7]);
+
+        const segmentCount = 16;
+        const circleLower = [];
+        const circleUpper = [];
+        const anchors = [];
+        const step = (Math.PI * 2) / segmentCount;
+        const anchorPattern = [
+          // Mirrors Form1.cs triangle fan order (top edge clockwise)
+          [0, halfB],
+          [na / 4, halfB],
+          [halfA, halfB],
+          [halfA, nb / 4],
+          [halfA, 0],
+          [halfA, -nb / 4],
+          [halfA, -halfB],
+          [na / 4, -halfB],
+          [0, -halfB],
+          [-na / 4, -halfB],
+          [-halfA, -halfB],
+          [-halfA, -nb / 4],
+          [-halfA, 0],
+          [-halfA, nb / 4],
+          [-halfA, halfB],
+          [-na / 4, halfB]
+        ];
+
+        for (let i = 0; i < segmentCount; i++) {
+          const angle = i * step - step / 2;
+          const dirX = Math.sin(angle);
+          const dirY = Math.cos(angle);
+
+          const cx = circleCenterX + dirX * radius;
+          const cy = circleCenterY + dirY * radius;
+          circleLower.push([cx, cy, zCircle]);
+          circleUpper.push([cx, cy, zBranchEnd]);
+
+          const [anchorX, anchorY] = anchorPattern[i];
+          anchors.push([anchorX, anchorY, zRect]);
+        }
+
+    for (let i = 0; i < segmentCount; i++) {
+      const next = (i + 1) % segmentCount;
+      addQuad(anchors[i], anchors[next], circleLower[next], circleLower[i]);
+    }
+
+    for (let i = 0; i < segmentCount; i++) {
+      const next = (i + 1) % segmentCount;
+      addQuad(circleLower[i], circleLower[next], circleUpper[next], circleUpper[i]);
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+    return geometry;
+  },
+
   TR1a: (dims) => {
     const { a = 10, b = 10, d = 5, w = 2, L = 12, e = 3, f = 2, l3 = 2 } = dims;
     const max = Math.max(a, b, d, w, L, e, f, l3);

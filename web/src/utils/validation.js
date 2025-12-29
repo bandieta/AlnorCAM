@@ -11,7 +11,7 @@ const LIMITS = {
 
 export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
   const errors = [];
-  const { a, b, e, f, r, alfa, L, c, d } = dimensions;
+  const { a, b, e, f, r, alfa, L, c, d, m, w, l3 } = dimensions;
 
   // Helper to check if value is valid number
   const isNum = (val) => typeof val === 'number' && !isNaN(val);
@@ -54,9 +54,113 @@ export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
       if (!isPositive(L)) {
           errors.push("Dimension 'L' must be > 0");
       }
+      // PR1a specific L check (100-20000)
+      if (symbol === 'PR1a') {
+        if (L < 100 || L > 20000) {
+          errors.push("Dimension 'L' must be between 100 and 20000mm");
+        }
+      }
+      // PR7a specific L check (250-5000)
+      if (symbol === 'PR7a') {
+        if (L < 250 || L > 5000) {
+          errors.push("Dimension 'L' must be between 250 and 5000mm");
+        }
+      }
+  }
+
+  if (symbol === 'QPR2a') {
+    if (dimensions.h !== undefined && dimensions.h < 30) {
+      errors.push("Dimension 'h' must be >= 30mm");
+    }
+    if (dimensions.m !== undefined && dimensions.m < 30) {
+      errors.push("Dimension 'm' must be >= 30mm");
+    }
+  }
+
+  if (symbol === 'QBRa') {
+    // b <= d
+    if (b !== undefined && d !== undefined && b > d) {
+      errors.push("Dimension 'b' must be <= 'd'");
+    }
+    // alfa 15-90
+    if (alfa !== undefined && (alfa < 15 || alfa > 90)) {
+      errors.push("Angle 'alfa' must be between 15 and 90 degrees");
+    }
+  }
+
+  if (symbol === 'QBR1a') {
+    // b <= d (Width reduction)
+    if (b !== undefined && d !== undefined && b > d) {
+      errors.push("Dimension 'b' must be <= 'd'");
+    }
+    // alfa 15-90
+    if (alfa !== undefined && (alfa < 15 || alfa > 90)) {
+      errors.push("Angle 'alfa' must be between 15 and 90 degrees");
+    }
+  }
+
+  if (symbol === 'QBFa') {
+    if (!isNum(r) || (r !== 0 && r < LIMITS.MIN_RADIUS)) {
+      errors.push("Radius 'r' must be 0 or at least 100mm");
+    }
+
+    if (isNum(r)) {
+      const minExtension = r === 0 ? LIMITS.MIN_EXTENSION_ZERO_R : r + 30;
+      if (e !== undefined && (!isNum(e) || e < minExtension)) {
+        errors.push(`Dimension 'e' must be >= ${minExtension}mm when r = ${r}`);
+      }
+      if (f !== undefined && (!isNum(f) || f < minExtension)) {
+        errors.push(`Dimension 'f' must be >= ${minExtension}mm when r = ${r}`);
+      }
+    }
+  }
+
+  if (symbol === 'QESa') {
+    if (!isNum(e) || e < 30) {
+      errors.push("Dimension 'e' must be >= 30mm");
+    }
+  }
+
+  if (symbol === 'TR1a') {
+    if (isNum(L) && (L < 100 || L > 20000)) {
+      errors.push("Dimension 'L' must be between 100 and 20000mm");
+    }
+    if (isNum(d) && isNum(a) && d > a) {
+      errors.push("Dimension 'd' must be <= 'a'");
+    }
+    if (isNum(w) && isNum(L) && w > L - 60) {
+      errors.push("Dimension 'w' must be at least 60mm shorter than 'L'");
+    }
+    if (isNum(l3) && l3 <= 0) {
+      errors.push("Dimension 'l3' must be > 0");
+    }
+  }
+
+  if (symbol === 'TR2a') {
+    if (isNum(L) && (L < 100 || L > 20000)) {
+      errors.push("Dimension 'L' must be between 100 and 20000mm");
+    }
+    if (isNum(d) && isNum(a) && d > a) {
+      errors.push("Dimension 'd' must be <= 'a'");
+    }
+    if (isNum(d) && isNum(L) && d > L - 60) {
+      errors.push("Dimension 'd' must be at least 60mm shorter than 'L'");
+    }
+    if (isNum(l3) && l3 <= 0) {
+      errors.push("Dimension 'l3' must be > 0");
+    }
   }
 
   // --- Specific Shape Checks ---
+
+  if (symbol === 'PR1a') {
+    // Extension m check
+    if (m !== undefined) {
+      if (!isNum(m) || m < 50) {
+        errors.push("Dimension 'm' must be >= 50mm");
+      }
+    }
+  }
 
   if (symbol === 'QBa' || symbol === 'QBNa') {
     // Radius (r) Validation

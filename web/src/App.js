@@ -19,7 +19,7 @@ const SHAPE_DEFINITIONS = {
   'QBFa': { polish: 'Kolano symetryczne', dimensions: ['a', 'b', 'e', 'f', 'r'] },
   'QESa': { polish: 'Zaślepka prostokątna', dimensions: ['a', 'b', 'e'] },
   'TR1a': { polish: 'Trójnik z odej. prostokątnym', dimensions: ['a', 'b', 'd', 'w', 'L', 'e', 'f', 'l3'] },
-  'TR2a': { polish: 'Trójnik z odej. okrągłymi', dimensions: ['a', 'b', 'd', 'L', 'e', 'f', 'l3'] },
+  'TR2a': { polish: 'Trójnik z odej. okrągłymi', dimensions: ['a', 'b', 'd', 'L', 'l3', 'e', 'f'] },
   'TRa': { polish: 'Trójnik symetryczny', dimensions: ['a', 'b', 'd', 'h', 'L', 'q', 'r', 'i', 'p'] },
   'QPR3a': { polish: 'Odsadzka sym.', dimensions: ['a', 'b', 'e', 'm', 'h', 'L'] },
   'QPR4a': { polish: 'Odsadzka asym.', dimensions: ['a', 'b', 'd', 'e', 'm', 'h', 'L'] },
@@ -103,6 +103,77 @@ function App() {
       dimensions.L = 500;
       dimensions.h = 60;
       dimensions.m = 60;
+    } else if (symbol === 'PR1a') {
+      dimensions.a = 400;
+      dimensions.b = 350;
+      dimensions.d = 200;
+      dimensions.L = 500;
+      dimensions.h = 30;
+      dimensions.m = 50;
+    } else if (symbol === 'PR7a') {
+      dimensions.a = 400;
+      dimensions.b = 350;
+      dimensions.d = 200;
+      dimensions.L = 500;
+      dimensions.h = 60;
+      dimensions.m = 30;
+      dimensions.e = -75;
+      dimensions.f = -100;
+    } else if (symbol === 'QPR2a') {
+      dimensions.a = 400;
+      dimensions.b = 350;
+      dimensions.c = 200;
+      dimensions.d = 200;
+      dimensions.L = 500;
+      dimensions.h = 30;
+      dimensions.m = 30;
+      dimensions.e = -75;
+      dimensions.f = -100;
+    } else if (symbol === 'QBRa') {
+      dimensions.a = 300;
+      dimensions.b = 300;
+      dimensions.d = 400;
+      dimensions.e = 50;
+      dimensions.f = 50;
+      dimensions.r = 150;
+      dimensions.alfa = 90;
+    } else if (symbol === 'QBR1a') {
+      dimensions.a = 300;
+      dimensions.b = 300;
+      dimensions.c = 300;
+      dimensions.d = 400;
+      dimensions.e = 50;
+      dimensions.f = 50;
+      dimensions.r = 150;
+      dimensions.g = 0;
+      dimensions.alfa = 90;
+    } else if (symbol === 'QBFa') {
+      dimensions.a = 300;
+      dimensions.b = 300;
+      dimensions.e = 150;
+      dimensions.f = 150;
+      dimensions.r = 120;
+    } else if (symbol === 'QESa') {
+      dimensions.a = 400;
+      dimensions.b = 300;
+      dimensions.e = 30;
+    } else if (symbol === 'TR1a') {
+      dimensions.a = 250;
+      dimensions.b = 200;
+      dimensions.d = 140;
+      dimensions.w = 180;
+      dimensions.L = 500;
+      dimensions.e = 250;
+      dimensions.f = 110;
+      dimensions.l3 = 80;
+      } else if (symbol === 'TR2a') {
+        dimensions.a = 250;
+        dimensions.b = 200;
+        dimensions.d = 140;
+        dimensions.L = 500;
+        dimensions.e = 250;
+        dimensions.f = 100;
+        dimensions.l3 = 80;
     } else {
       // Generic default for others
       shapeConfig.dimensions.forEach(dim => {
