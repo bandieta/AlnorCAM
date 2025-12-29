@@ -39,6 +39,12 @@ export const calculateArea = (symbol, dimensions) => {
       // Formula: 2 * (a + b) * (2*b + e + f) / 1,000,000 (d == b in C#)
       area = (2 * (A + B) * (2 * B + E + F)) / 1000000;
       break;
+    
+    case 'QBFRa':
+      // Formula: 2 * (a + b) * (b + d + e + f) / 1,000,000
+      // Reducing elbow: perimeter times total length around the bend
+      area = (2 * (A + B) * (B + D + E + F)) / 1000000;
+      break;
     case 'QESa':
       // Formula: a * b / 1,000,000
       area = (A * B) / 1000000;

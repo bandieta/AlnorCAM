@@ -142,6 +142,36 @@ export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
     }
   }
 
+  if (symbol === 'QBFRa') {
+    // Radius validation
+    if (!isNum(r) || (r !== 0 && r < LIMITS.MIN_RADIUS)) {
+      errors.push("Radius 'r' must be 0 or at least 100mm");
+    }
+
+    // Extension validation (similar to QBFa)
+    const currentR = isNum(r) ? r : 0;
+    const minExtension = currentR === 0 ? LIMITS.MIN_EXTENSION_ZERO_R : LIMITS.MIN_EXTENSION;
+
+    if (e !== undefined) {
+      if (!isNum(e) || e < minExtension) {
+        const suffix = currentR === 0 ? " when r = 0" : '';
+        errors.push(`Dimension 'e' must be >= ${minExtension}mm${suffix}`);
+      }
+    }
+
+    if (f !== undefined) {
+      if (!isNum(f) || f < minExtension) {
+        const suffix = currentR === 0 ? " when r = 0" : '';
+        errors.push(`Dimension 'f' must be >= ${minExtension}mm${suffix}`);
+      }
+    }
+
+    // b <= d constraint (like QBRa)
+    if (b !== undefined && d !== undefined && b > d) {
+      errors.push("Dimension 'b' must be <= 'd'");
+    }
+  }
+
   if (symbol === 'QESa') {
     if (!isNum(e) || e < 30) {
       errors.push("Dimension 'e' must be >= 30mm");
