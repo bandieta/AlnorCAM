@@ -13,7 +13,6 @@ function TechnicalDrawing({ selectedElement }) {
 
   const dimensions = selectedElement.dimensions || {};
   const isQda = selectedElement.symbol === 'QDa';
-  const entries = Object.entries(dimensions);
 
   const qdaNumbers = isQda
     ? {
@@ -26,15 +25,6 @@ function TechnicalDrawing({ selectedElement }) {
   const flange = isQda && qdaNumbers.l > 0
     ? (qdaNumbers.l > 2501 ? 40 : qdaNumbers.l > 1000 ? 30 : 25)
     : null;
-
-  const gridData = isQda
-    ? [
-        ['a [mm]', qdaNumbers.a || '—'],
-        ['b [mm]', qdaNumbers.b || '—'],
-        ['L [mm]', qdaNumbers.l || '—'],
-        ['Ramka p [mm]', flange ?? '—']
-      ]
-    : entries;
 
   return (
     <div className="technical-drawing" role="group" aria-label="Parametry techniczne">
@@ -49,26 +39,13 @@ function TechnicalDrawing({ selectedElement }) {
               a={qdaNumbers.a}
               b={qdaNumbers.b}
               l={qdaNumbers.l}
-              p={flange}
+              p={flange ?? 0}
             />
-          </div>
-          <div className="technical-drawing-grid">
-            {gridData.map(([key, value]) => (
-              <div className="technical-drawing-field" key={key}>
-                <span className="technical-drawing-label">{key}</span>
-                <span className="technical-drawing-value">{value}</span>
-              </div>
-            ))}
           </div>
         </div>
       ) : (
-        <div className="technical-drawing-grid">
-          {gridData.map(([key, value]) => (
-            <div className="technical-drawing-field" key={key}>
-              <span className="technical-drawing-label">{key}</span>
-              <span className="technical-drawing-value">{value}</span>
-            </div>
-          ))}
+        <div className="technical-drawing-empty" role="note">
+          Rysunek techniczny dostępny tylko dla wybranych elementów.
         </div>
       )}
     </div>

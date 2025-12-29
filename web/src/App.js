@@ -3,6 +3,7 @@ import ElementsList from './components/ElementsList';
 import ElementEditor from './components/ElementEditor';
 import Viewer3D from './components/Viewer3D';
 import TechnicalDrawing from './components/TechnicalDrawing';
+import previewImage from './res/QBRa.jpg';
 import { calculateArea } from './utils/calculations';
 import './App.css';
 
@@ -44,6 +45,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isViewerOpen, setIsViewerOpen] = useState(true);
   const [isDrawingOpen, setIsDrawingOpen] = useState(true);
+  const [showImagePreview, setShowImagePreview] = useState(false);
 
   const selectedElement = elements.find(el => el.id === selectedId);
   const selectedArea = selectedElement ? calculateArea(selectedElement.symbol, selectedElement.dimensions) : null;
@@ -244,34 +246,68 @@ function App() {
             <section className="viewer-panel">
               <div className="visualization-stack">
                 <div className={`collapsible-panel viewer-block ${isViewerOpen ? 'open' : 'collapsed'}`}>
-                  <button
-                    type="button"
-                    className="collapsible-header"
-                    onClick={() => setIsViewerOpen(!isViewerOpen)}
-                    aria-expanded={isViewerOpen}
-                    aria-controls={isViewerOpen ? 'viewer-content' : undefined}
-                  >
-                    <span>Wizualizacja 3D</span>
-                    <span className="collapsible-icon" aria-hidden="true">{isViewerOpen ? '▲' : '▼'}</span>
-                  </button>
+                  <div className="collapsible-header">
+                    <div className="collapsible-title-group">
+                      <span className="collapsible-title"> </span>
+                      <button
+                        type="button"
+                        className={`mode-toggle ${showImagePreview ? 'is-image' : 'is-3d'}`}
+                        onClick={() => setShowImagePreview(!showImagePreview)}
+                        aria-pressed={showImagePreview}
+                        aria-label="Przełącz pomiędzy wizualizacją 3D a podglądem zdjęcia"
+                      >
+                        <span className="mode-toggle-label">
+                          {showImagePreview ? 'Podgląd zdjęcia' : 'Wizualizacja 3D'}
+                        </span>
+                        <span className="mode-toggle-track" aria-hidden="true">
+                          <span className="mode-toggle-thumb" />
+                        </span>
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="collapse-control"
+                      onClick={() => setIsViewerOpen(!isViewerOpen)}
+                      aria-expanded={isViewerOpen}
+                      aria-controls={isViewerOpen ? 'viewer-content' : undefined}
+                      title={isViewerOpen ? 'Zwiń sekcję wizualizacji' : 'Rozwiń sekcję wizualizacji'}
+                    >
+                      <span className="collapsible-icon" aria-hidden="true">{isViewerOpen ? '▲' : '▼'}</span>
+                    </button>
+                  </div>
                   {isViewerOpen && (
                     <div id="viewer-content" className="collapsible-content">
-                      <Viewer3D elements={elements} selectedId={selectedId} />
+                      <div className="viewer-stage">
+                        {showImagePreview ? (
+                          <img
+                            src={previewImage}
+                            alt="Podgląd elementu w formie zdjęcia"
+                            className="viewer-image"
+                          />
+                        ) : (
+                          <Viewer3D elements={elements} selectedId={selectedId} />
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
 
                 <div className={`collapsible-panel drawing-block ${isDrawingOpen ? 'open' : 'collapsed'}`}>
-                  <button
-                    type="button"
-                    className="collapsible-header"
-                    onClick={() => setIsDrawingOpen(!isDrawingOpen)}
-                    aria-expanded={isDrawingOpen}
-                    aria-controls={isDrawingOpen ? 'drawing-content' : undefined}
-                  >
-                    <span>Rysunek techniczny</span>
-                    <span className="collapsible-icon" aria-hidden="true">{isDrawingOpen ? '▲' : '▼'}</span>
-                  </button>
+                  <div className="collapsible-header">
+                    <div className="collapsible-title-group">
+                      <span className="collapsible-title">Rysunek techniczny</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="collapse-control"
+                      onClick={() => setIsDrawingOpen(!isDrawingOpen)}
+                      aria-expanded={isDrawingOpen}
+                      aria-controls={isDrawingOpen ? 'drawing-content' : undefined}
+                      title={isDrawingOpen ? 'Zwiń sekcję rysunku' : 'Rozwiń sekcję rysunku'}
+                    >
+                      <span className="collapsible-icon" aria-hidden="true">{isDrawingOpen ? '▲' : '▼'}</span>
+                    </button>
+                  </div>
                   {isDrawingOpen && (
                     <div id="drawing-content" className="collapsible-content">
                       <TechnicalDrawing selectedElement={selectedElement} />
