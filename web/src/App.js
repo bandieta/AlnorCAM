@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ElementsList from './components/ElementsList';
 import ElementEditor from './components/ElementEditor';
 import Viewer3D from './components/Viewer3D';
+import TechnicalDrawing from './components/TechnicalDrawing';
 import { calculateArea } from './utils/calculations';
 import './App.css';
 
@@ -41,6 +42,8 @@ function App() {
   const [elements, setElements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isViewerOpen, setIsViewerOpen] = useState(true);
+  const [isDrawingOpen, setIsDrawingOpen] = useState(true);
 
   const selectedElement = elements.find(el => el.id === selectedId);
   const selectedArea = selectedElement ? calculateArea(selectedElement.symbol, selectedElement.dimensions) : null;
@@ -239,7 +242,43 @@ function App() {
               )}
             </section>
             <section className="viewer-panel">
-              <Viewer3D elements={elements} selectedId={selectedId} />
+              <div className="visualization-stack">
+                <div className={`collapsible-panel viewer-block ${isViewerOpen ? 'open' : 'collapsed'}`}>
+                  <button
+                    type="button"
+                    className="collapsible-header"
+                    onClick={() => setIsViewerOpen(!isViewerOpen)}
+                    aria-expanded={isViewerOpen}
+                    aria-controls={isViewerOpen ? 'viewer-content' : undefined}
+                  >
+                    <span>Wizualizacja 3D</span>
+                    <span className="collapsible-icon" aria-hidden="true">{isViewerOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {isViewerOpen && (
+                    <div id="viewer-content" className="collapsible-content">
+                      <Viewer3D elements={elements} selectedId={selectedId} />
+                    </div>
+                  )}
+                </div>
+
+                <div className={`collapsible-panel drawing-block ${isDrawingOpen ? 'open' : 'collapsed'}`}>
+                  <button
+                    type="button"
+                    className="collapsible-header"
+                    onClick={() => setIsDrawingOpen(!isDrawingOpen)}
+                    aria-expanded={isDrawingOpen}
+                    aria-controls={isDrawingOpen ? 'drawing-content' : undefined}
+                  >
+                    <span>Rysunek techniczny</span>
+                    <span className="collapsible-icon" aria-hidden="true">{isDrawingOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {isDrawingOpen && (
+                    <div id="drawing-content" className="collapsible-content">
+                      <TechnicalDrawing selectedElement={selectedElement} />
+                    </div>
+                  )}
+                </div>
+              </div>
             </section>
           </div>
         </div>
