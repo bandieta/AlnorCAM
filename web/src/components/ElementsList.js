@@ -11,7 +11,9 @@ function ElementsList({ elements, selectedId, onSelect, onAdd, onDelete, availab
       </div>
       
       <div className="add-element">
-        <select 
+        <label htmlFor="shape-selector">Dodaj kształt</label>
+        <select
+          id="shape-selector"
           onChange={(e) => {
             if (e.target.value) {
               onAdd(e.target.value);
@@ -21,7 +23,7 @@ function ElementsList({ elements, selectedId, onSelect, onAdd, onDelete, availab
           defaultValue=""
           className="add-select"
         >
-          <option value="">+ Add Shape...</option>
+          <option value="">Wybierz symbol...</option>
           {availableSymbols.map(symbol => (
             <option key={symbol} value={symbol}>
               {symbol} ({shapeDefinitions[symbol].polish})

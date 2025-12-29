@@ -1384,6 +1384,147 @@ const ShapeGeometries = {
     return geometry;
   },
 
+  TR2a: (dims) => {
+    const {
+      a = 250,
+      b = 200,
+      d = 140,
+      L = 500,
+      e = 250,
+      f = 100,
+      l3 = 80
+    } = dims;
+
+    const max = Math.max(a, b, d, L, e, f, l3);
+    if (!Number.isFinite(max) || max <= 0) {
+      return createDefaultGeometry(dims);
+    }
+
+    const na = a / max;
+    const nb = b / max;
+    const nd = d / max;
+    const nL = L / max;
+    const ne = e / max;
+    const nf = f / max;
+    const nl3 = l3 / max;
+
+    if (nd <= 0 || nl3 <= 0) {
+      return createDefaultGeometry(dims);
+    }
+
+    const points = [];
+    const setPoint = (idx, x, y, z) => {
+      points[idx] = [x, y, z];
+    };
+
+    // Main duct box
+    setPoint(0, -nL / 2, nb / 2, -na / 2);
+    setPoint(1, nL / 2, nb / 2, -na / 2);
+    setPoint(2, nL / 2, -nb / 2, -na / 2);
+    setPoint(3, -nL / 2, -nb / 2, -na / 2);
+    setPoint(4, -nL / 2, nb / 2, na / 2);
+    setPoint(5, nL / 2, nb / 2, na / 2);
+    setPoint(6, nL / 2, -nb / 2, na / 2);
+    setPoint(7, -nL / 2, -nb / 2, na / 2);
+
+    const centerX = -nL / 2 + ne;
+    const centerZ = -na / 2 + nf;
+    const radius = nd / 2;
+    const topY = -nb / 2;
+    const bottomY = topY - nl3;
+
+    // Branch rectangular collar
+    setPoint(8, centerX - radius, topY, centerZ - radius);
+    setPoint(9, centerX + radius, topY, centerZ - radius);
+    setPoint(10, centerX + radius, bottomY, centerZ - radius);
+    setPoint(11, centerX - radius, bottomY, centerZ - radius);
+    setPoint(12, centerX - radius, topY, centerZ + radius);
+    setPoint(13, centerX + radius, topY, centerZ + radius);
+    setPoint(14, centerX + radius, bottomY, centerZ + radius);
+    setPoint(15, centerX - radius, bottomY, centerZ + radius);
+
+    // Intermediate control points replicating Form1.cs grid
+    const gridY = -nb / 2 - nl3 / 2 + nd / 2;
+    const step = nd / 6;
+    const baseX = points[12][0];
+    const baseZ = points[12][2];
+
+    setPoint(30, baseX + step, gridY, baseZ);
+    setPoint(29, baseX + step * 2, gridY, baseZ);
+    setPoint(28, baseX + step * 3, gridY, baseZ);
+    setPoint(27, baseX + step * 4, gridY, baseZ);
+    setPoint(26, baseX + step * 5, gridY, baseZ);
+
+    setPoint(25, baseX + nd, gridY, baseZ - step);
+    setPoint(24, baseX + nd, gridY, baseZ - step * 2);
+    setPoint(23, baseX + nd, gridY, baseZ - step * 3);
+    setPoint(22, baseX + nd, gridY, baseZ - step * 4);
+    setPoint(21, baseX + nd, gridY, baseZ - step * 5);
+
+    setPoint(31, baseX, gridY, baseZ - step);
+    setPoint(32, baseX, gridY, baseZ - step * 2);
+    setPoint(33, baseX, gridY, baseZ - step * 3);
+    setPoint(34, baseX, gridY, baseZ - step * 4);
+    setPoint(35, baseX, gridY, baseZ - step * 5);
+
+    setPoint(36, baseX + step, gridY, baseZ - nd);
+    setPoint(37, baseX + step * 2, gridY, baseZ - nd);
+    setPoint(38, baseX + step * 3, gridY, baseZ - nd);
+    setPoint(39, baseX + step * 4, gridY, baseZ - nd);
+    setPoint(40, baseX + step * 5, gridY, baseZ - nd);
+
+    const pushPoint = (x, y, z) => {
+      points.push([x, y, z]);
+      return points.length - 1;
+    };
+
+    const segments = 24;
+    const ringTop = [];
+    const ringBottom = [];
+
+    for (let i = 0; i <= segments; i++) {
+      const angle = THREE.MathUtils.degToRad(i * 15);
+      const sinA = Math.sin(angle);
+      const cosA = Math.cos(angle);
+      const x = centerX + sinA * radius;
+      const z = centerZ + radius - cosA * radius;
+      ringTop[i] = pushPoint(x, topY, z);
+      ringBottom[i] = pushPoint(x, bottomY, z);
+    }
+
+    const faces = [
+      [0, 1, 5, 4], // Top panel (rear preserved for stiffness)
+      [1, 2, 6, 5], // Right side
+      [3, 0, 4, 7], // Left side
+
+      [2, 3, 8, 9],  // Opening quadrant 1
+      [2, 9, 13, 6], // Opening quadrant 2
+      [12, 13, 6, 7],// Opening quadrant 3
+      [3, 8, 12, 7]  // Opening quadrant 4
+    ];
+
+    for (let i = 0; i < segments; i++) {
+      const topA = ringTop[i];
+      const topB = ringTop[i + 1];
+      const bottomB = ringBottom[i + 1];
+      const bottomA = ringBottom[i];
+      faces.push([topA, topB, bottomB, bottomA]);
+    }
+
+    const at = [12, 30, 29, 28, 27, 26, 13, 25, 24, 23, 22, 21, 9, 40, 39, 38, 37, 36, 8, 35, 34, 33, 32, 31];
+    const bt = [30, 29, 28, 27, 26, 13, 25, 24, 23, 22, 21, 9, 40, 39, 38, 37, 36, 8, 35, 34, 33, 32, 31, 12];
+    const ct = [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 23, 22, 21, 20, 19, 18, 17, 16, 15];
+    const dt = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 23, 22, 21, 20, 19, 18, 17, 16];
+
+    for (let i = 0; i < segments; i++) {
+      faces.push([at[i], bt[i], ringTop[ct[i]], ringTop[dt[i]]]);
+    }
+
+    const orientedFaces = orientFacesOutward(points, faces);
+    const geometry = createBufferGeometry(points, orientedFaces);
+    return geometry;
+  },
+
   TR1a: (dims) => {
     const { a = 10, b = 10, d = 5, w = 2, L = 12, e = 3, f = 2, l3 = 2 } = dims;
     const max = Math.max(a, b, d, w, L, e, f, l3);
@@ -1557,6 +1698,18 @@ function Viewer3D({ elements, selectedId }) {
 
     window.addEventListener('resize', handleResize);
 
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => {
+          handleResize();
+        })
+      : null;
+
+    if (resizeObserver) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    handleResize();
+
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
@@ -1567,6 +1720,9 @@ function Viewer3D({ elements, selectedId }) {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       renderer.dispose();
       controls.dispose();
       if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {

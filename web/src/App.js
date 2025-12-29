@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ElementsList from './components/ElementsList';
 import ElementEditor from './components/ElementEditor';
 import Viewer3D from './components/Viewer3D';
+import { calculateArea } from './utils/calculations';
 import './App.css';
 
 // Define all available shapes from Alnor CAM with Polish names
@@ -42,6 +43,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const selectedElement = elements.find(el => el.id === selectedId);
+  const selectedArea = selectedElement ? calculateArea(selectedElement.symbol, selectedElement.dimensions) : null;
 
   const addElement = (symbol) => {
     const newId = Math.max(...elements.map(el => el.id), 0) + 1;
@@ -198,45 +200,50 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Alnor 3D Shape Viewer</h1>
-        <p>Shape Library from AlnorCAM</p>
+        <div className="header-inner">
+
+        </div>
       </header>
-      <div className="app-container">
-        <aside className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
-          <div className="sidebar-header-controls">
-            <button 
-              className="sidebar-toggle" 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-            >
-              {isSidebarOpen ? '◀' : '▶'}
-            </button>
+      <main className="app-main">
+        <div className="app-main-inner">
+          <div className={`workspace-grid ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
+            <aside className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
+              <div className="sidebar-header-controls">
+                <button
+                  className="sidebar-toggle"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  title={isSidebarOpen ? 'Zwiń panel' : 'Rozwiń panel'}
+                >
+                  {isSidebarOpen ? '◄' : '►'}
+                </button>
+              </div>
+              {isSidebarOpen && (
+                <ElementsList
+                  elements={elements}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onAdd={addElement}
+                  onDelete={deleteElement}
+                  availableSymbols={getAvailableSymbols()}
+                  shapeDefinitions={SHAPE_DEFINITIONS}
+                />
+              )}
+            </aside>
+            <section className="editor-panel">
+              {selectedElement && (
+                <ElementEditor
+                  element={selectedElement}
+                  onUpdate={updateElement}
+                  shapeDefinition={SHAPE_DEFINITIONS[selectedElement.symbol]}
+                />
+              )}
+            </section>
+            <section className="viewer-panel">
+              <Viewer3D elements={elements} selectedId={selectedId} />
+            </section>
           </div>
-          {isSidebarOpen && (
-            <ElementsList 
-              elements={elements}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              onAdd={addElement}
-              onDelete={deleteElement}
-              availableSymbols={getAvailableSymbols()}
-              shapeDefinitions={SHAPE_DEFINITIONS}
-            />
-          )}
-        </aside>
-        <main className="main-content">
-          {selectedElement && (
-            <ElementEditor 
-              element={selectedElement}
-              onUpdate={updateElement}
-              shapeDefinition={SHAPE_DEFINITIONS[selectedElement.symbol]}
-            />
-          )}
-        </main>
-        <section className="viewer">
-          <Viewer3D elements={elements} selectedId={selectedId} />
-        </section>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

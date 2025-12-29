@@ -1,6 +1,13 @@
-.viewer-3d {
+ .viewer-3d {
+  position: relative;
   width: 100%;
   height: 100%;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: radial-gradient(circle at 20% 20%, rgba(15, 91, 161, 0.08) 0%, transparent 42%),
+    linear-gradient(180deg, #f7f9fc 0%, #eef2f8 100%);
 }
 
 .viewer-3d canvas {
