@@ -991,6 +991,47 @@ const ShapeGeometries = {
     return geometry;
   },
 
+  QESa: (dims) => {
+    const {
+      a = 400,
+      b = 300,
+      e = 30
+    } = dims;
+
+    let max = Math.max(a, b, e);
+    if (!Number.isFinite(max) || max <= 0) {
+      return createDefaultGeometry(dims);
+    }
+
+    const na = a / max;
+    const nb = b / max;
+    const ne = e / max;
+
+    const points = [];
+
+    points[0] = [-na / 2, -nb / 2, -ne / 2];
+    points[1] = [na / 2, -nb / 2, -ne / 2];
+    points[2] = [na / 2, nb / 2, -ne / 2];
+    points[3] = [-na / 2, nb / 2, -ne / 2];
+    points[4] = [-na / 2, -nb / 2, ne / 2];
+    points[5] = [na / 2, -nb / 2, ne / 2];
+    points[6] = [na / 2, nb / 2, ne / 2];
+    points[7] = [-na / 2, nb / 2, ne / 2];
+
+    const faces = [
+      [4, 5, 6, 7],
+      [0, 3, 7, 4],
+      [3, 2, 6, 7],
+      [2, 1, 5, 6],
+      [0, 1, 5, 4]
+    ];
+
+    const orientedFaces = orientFacesOutward(points, faces);
+    const geometry = createBufferGeometry(points, orientedFaces);
+    geometry.center();
+    return geometry;
+  },
+
   QPR6a: (dims) => {
     const { a = 400, b = 350, c = 100, d = 100, L = 500, h = 60, m = 60 } = dims;
     
