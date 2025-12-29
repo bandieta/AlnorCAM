@@ -322,7 +322,7 @@ const ShapeGeometries = {
       e = 30,
       f = 30,
       r = 120,
-      alfa = 90
+      alfa = 70
     } = dims;
 
     const alfaClamped = Math.max(15, Math.min(90, alfa || 90));
@@ -430,40 +430,39 @@ const ShapeGeometries = {
     segmentCount = Math.max(segmentCount, alfaClamped >= 15 ? 1 : 0);
     segmentCount = Math.min(segmentCount, 5);
 
+    // QBRa follows constant top/bottom Z per C#; no seam Z override
+
     const faces = [
-      // Extension f faces (Corrected winding)
-      [0, 1, 5, 4], // Back (Z-)
-      [1, 5, 6, 2], // Right (X+)
-      [3, 7, 6, 2], // Front (Z+)
-      [0, 3, 7, 4], // Left (X-)
+      // Extension f faces (Exact C# logic)
+      [0, 1, 5, 4],
+      [1, 2, 6, 5],
+      [3, 2, 6, 7],
+      [0, 3, 7, 4],
 
-      // Extension e faces (Corrected winding)
-      [12, 8, 11, 15], // Bottom (Z-)
-      [11, 10, 14, 15], // Outer Side
-      [9, 10, 14, 13], // Top (Z+)
-      [12, 13, 9, 8], // Inner Side
+      // Extension e faces (Exact C# logic)
+      [12, 8, 11, 15],
+      [11, 10, 14, 15],
+      [9, 10, 14, 13],
+      [12, 8, 9, 13],
 
-      // Connection faces
-      [11, 16, 17, 10], // Outer Connection
-      [8, 16, 11], // Triangle 1 (Bottom Z-)
-      [9, 10, 17]  // Triangle 2 (Top Z+)
+      // Connection faces (Exact C# logic)
+      [11, 16, 17, 10],
+      [8, 11, 16],
+      [9, 10, 17]
     ];
 
     for (let i = 0; i < segmentCount; i++) {
-      faces.push([20 + i, 30 + i, 30 + i + 1, 20 + i + 1]); // Bottom Loop (Z-)
-      faces.push([40 + i, 40 + i + 1, 50 + i + 1, 50 + i]); // Top Loop (Z+)
-      faces.push([20 + i, 40 + i, 40 + i + 1, 20 + i + 1]); // Inner Loop (Inward)
-      faces.push([30 + i, 30 + i + 1, 50 + i + 1, 50 + i]); // Outer Loop (Outward)
+      faces.push([20 + i, 20 + i + 1, 30 + i + 1, 30 + i]);
+      faces.push([40 + i, 40 + i + 1, 50 + i + 1, 50 + i]);
+      faces.push([20 + i, 20 + i + 1, 40 + i + 1, 40 + i]);
+      faces.push([30 + i, 30 + i + 1, 50 + i + 1, 50 + i]);
     }
 
-    // Manual Start Connections
-    faces.push([4, 5, 30, 20]); // Bottom Start (Z-)
-    faces.push([7, 40, 50, 6]); // Top Start (Z+)
-    faces.push([4, 7, 40, 20]); // Inner Start (Inward)
-    faces.push([5, 30, 50, 6]); // Outer Start (Outward)
-    faces.push([7, 6, 50, 40]); // Top Start -> Normal +Z (Flipped from C#)
-    faces.push([4, 7, 40, 20]); // Inner Start -> Normal Inward (Flipped from C#)
-    faces.push([5, 30, 50, 6]); // Outer Start -> Normal Outward
+    // Manual Start Connections (Exact C# logic)
+    faces.push([4, 20, 30, 5]);
+    faces.push([7, 40, 50, 6]);
+    faces.push([4, 20, 40, 7]);
+    faces.push([5, 30, 50, 6]);
 
     const filteredFaces = faces.filter(face => face.every(idx => points[idx]));
 
@@ -610,6 +609,31 @@ const ShapeGeometries = {
       setPoint(40 + ii, innerX, innerY, zTop);
       setPoint(50 + ii, outerX, outerY, zTop);
     }
+
+    // Post-loop adjustments (Exact C# logic)
+    if (c > a) {
+      const z8_11_12_15 = -na / 2.0 + finalDiffl * 6;
+      const z9_10_13_14 = na / 2.0 - finalDiffp * 6;
+
+      points[8][2] = z8_11_12_15;
+      points[9][2] = z9_10_13_14;
+      points[10][2] = z9_10_13_14;
+      points[11][2] = z8_11_12_15;
+
+      points[12][2] = z8_11_12_15;
+      points[13][2] = z9_10_13_14;
+      points[14][2] = z9_10_13_14;
+      points[15][2] = z8_11_12_15;
+    }
+
+    // Manual tweaks from C#
+    if (points[54] && points[34]) {
+        points[17][2] = points[54][2];
+        points[16][2] = points[34][2];
+    }
+
+    if (points[24]) points[24][2] += finalDiffl;
+    if (points[44]) points[44][2] -= finalDiffp;
 
     let alfa1 = Math.floor(alfaClamped);
     if (alfa1 === 90) {
