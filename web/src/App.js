@@ -136,7 +136,7 @@ function App() {
       dimensions.e = 30;
       dimensions.f = 30;
       dimensions.r = 120;
-      dimensions.alfa = 90;
+      dimensions.alfa = 70;
     } else if (symbol === 'QBR1a') {
       dimensions.a = 300;
       dimensions.b = 200;
