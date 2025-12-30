@@ -4,6 +4,7 @@ import TechnicalDrawingQBa from './TechnicalDrawingQBa';
 import TechnicalDrawingQBNa from './TechnicalDrawingQBNa';
 import TechnicalDrawingQPR6a from './TechnicalDrawingQPR6a';
 import TechnicalDrawingPR1a from './TechnicalDrawingPR1a';
+import TechnicalDrawingPR7a from './TechnicalDrawingPR7a';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -84,6 +85,22 @@ function TechnicalDrawing({ selectedElement }) {
             h: Number(dimensions.h) || 0
           },
           ariaLabel: 'Schemat redukcji prostokąt-okrąg PR1a'
+        };
+      }
+      case 'PR7a': {
+        return {
+          Component: TechnicalDrawingPR7a,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            d: Number(dimensions.d) || 0,
+            L: Number(dimensions.L || dimensions.l) || 0,
+            m: Number(dimensions.m) || 0,
+            h: Number(dimensions.h) || 0,
+            e: Number(dimensions.e ?? dimensions.ee) || 0,
+            f: Number(dimensions.f) || 0
+          },
+          ariaLabel: 'Schemat redukcji prostokąt-okrąg z odejściem PR7a'
         };
       }
       default:
