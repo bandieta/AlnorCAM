@@ -2,6 +2,7 @@ import React from 'react';
 import TechnicalDrawingQDa from './TechnicalDrawingQDa';
 import TechnicalDrawingQBa from './TechnicalDrawingQBa';
 import TechnicalDrawingQBNa from './TechnicalDrawingQBNa';
+import TechnicalDrawingQPR6a from './TechnicalDrawingQPR6a';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -53,6 +54,21 @@ function TechnicalDrawing({ selectedElement }) {
             alfa: Number(dimensions.alfa) || 0
           },
           ariaLabel: 'Schemat łuku z kątem QBNa'
+        };
+      }
+      case 'QPR6a': {
+        return {
+          Component: TechnicalDrawingQPR6a,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            c: Number(dimensions.c) || 0,
+            d: Number(dimensions.d) || 0,
+            L: Number(dimensions.L || dimensions.l) || 0,
+            m: Number(dimensions.m) || 0,
+            h: Number(dimensions.h) || 0
+          },
+          ariaLabel: 'Schemat redukcji symetrycznej QPR6a'
         };
       }
       default:
