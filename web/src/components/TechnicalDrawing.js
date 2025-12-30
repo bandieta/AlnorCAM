@@ -1,6 +1,7 @@
 import React from 'react';
 import TechnicalDrawingQDa from './TechnicalDrawingQDa';
 import TechnicalDrawingQBa from './TechnicalDrawingQBa';
+import TechnicalDrawingQBNa from './TechnicalDrawingQBNa';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -38,6 +39,20 @@ function TechnicalDrawing({ selectedElement }) {
             r: Number(dimensions.r) || 0
           },
           ariaLabel: 'Schemat łuku symetrycznego QBa'
+        };
+      }
+      case 'QBNa': {
+        return {
+          Component: TechnicalDrawingQBNa,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            e: Number(dimensions.e) || 0,
+            f: Number(dimensions.f) || 0,
+            r: Number(dimensions.r) || 0,
+            alfa: Number(dimensions.alfa) || 0
+          },
+          ariaLabel: 'Schemat łuku z kątem QBNa'
         };
       }
       default:
