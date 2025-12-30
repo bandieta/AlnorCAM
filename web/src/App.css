@@ -259,8 +259,22 @@
   min-height: 0;
 }
 
+.collapsible-panel.collapsed {
+  gap: 0;
+  padding-bottom: 12px;
+}
+
+.collapsible-panel.collapsed .collapsible-content {
+  display: none;
+}
+
 .viewer-block.open {
   flex: 1;
+}
+
+.viewer-block.collapsed,
+.drawing-block.collapsed {
+  flex: 0 0 auto;
 }
 
 .viewer-block.open .collapsible-content {

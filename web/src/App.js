@@ -301,7 +301,6 @@ function App() {
                   <div
                     id="viewer-content"
                     className="collapsible-content"
-                    hidden={!isViewerOpen}
                     aria-hidden={!isViewerOpen}
                   >
                     <div className={`viewer-stage ${showImagePreview ? 'mode-image' : 'mode-3d'}`}>
@@ -344,7 +343,6 @@ function App() {
                   <div
                     id="drawing-content"
                     className="collapsible-content"
-                    hidden={!isDrawingOpen}
                     aria-hidden={!isDrawingOpen}
                   >
                     <TechnicalDrawing selectedElement={selectedElement} />
