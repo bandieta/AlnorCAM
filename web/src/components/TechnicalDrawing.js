@@ -3,6 +3,7 @@ import TechnicalDrawingQDa from './TechnicalDrawingQDa';
 import TechnicalDrawingQBa from './TechnicalDrawingQBa';
 import TechnicalDrawingQBNa from './TechnicalDrawingQBNa';
 import TechnicalDrawingQPR6a from './TechnicalDrawingQPR6a';
+import TechnicalDrawingPR1a from './TechnicalDrawingPR1a';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -69,6 +70,20 @@ function TechnicalDrawing({ selectedElement }) {
             h: Number(dimensions.h) || 0
           },
           ariaLabel: 'Schemat redukcji symetrycznej QPR6a'
+        };
+      }
+      case 'PR1a': {
+        return {
+          Component: TechnicalDrawingPR1a,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            d: Number(dimensions.d) || 0,
+            L: Number(dimensions.L || dimensions.l) || 0,
+            m: Number(dimensions.m) || 0,
+            h: Number(dimensions.h) || 0
+          },
+          ariaLabel: 'Schemat redukcji prostokąt-okrąg PR1a'
         };
       }
       default:
