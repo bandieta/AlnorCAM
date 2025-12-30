@@ -1,5 +1,6 @@
 import React from 'react';
 import TechnicalDrawingQDa from './TechnicalDrawingQDa';
+import TechnicalDrawingQBa from './TechnicalDrawingQBa';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -12,19 +13,39 @@ function TechnicalDrawing({ selectedElement }) {
   }
 
   const dimensions = selectedElement.dimensions || {};
-  const isQda = selectedElement.symbol === 'QDa';
 
-  const qdaNumbers = isQda
-    ? {
-        a: Number(dimensions.a) || 0,
-        b: Number(dimensions.b) || 0,
-        l: Number(dimensions.L || dimensions.l) || 0
+  const drawingConfig = (() => {
+    switch (selectedElement.symbol) {
+      case 'QDa': {
+        const a = Number(dimensions.a) || 0;
+        const b = Number(dimensions.b) || 0;
+        const l = Number(dimensions.L || dimensions.l) || 0;
+        const flange = l > 0 ? (l > 2501 ? 40 : l > 1000 ? 30 : 25) : 0;
+        return {
+          Component: TechnicalDrawingQDa,
+          props: { a, b, l, p: flange },
+          ariaLabel: 'Schemat kanału QDa'
+        };
       }
-    : null;
+      case 'QBa': {
+        return {
+          Component: TechnicalDrawingQBa,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            e: Number(dimensions.e) || 0,
+            f: Number(dimensions.f) || 0,
+            r: Number(dimensions.r) || 0
+          },
+          ariaLabel: 'Schemat łuku symetrycznego QBa'
+        };
+      }
+      default:
+        return null;
+    }
+  })();
 
-  const flange = isQda && qdaNumbers.l > 0
-    ? (qdaNumbers.l > 2501 ? 40 : qdaNumbers.l > 1000 ? 30 : 25)
-    : null;
+  const DrawingComponent = drawingConfig?.Component;
 
   return (
     <div className="technical-drawing" role="group" aria-label="Parametry techniczne">
@@ -32,15 +53,10 @@ function TechnicalDrawing({ selectedElement }) {
         <span className="technical-drawing-symbol">{selectedElement.symbol}</span>
         <span className="technical-drawing-count">ID #{selectedElement.id}</span>
       </div>
-      {isQda ? (
+      {DrawingComponent ? (
         <div className="technical-drawing-layout">
-          <div className="technical-drawing-visual" role="figure" aria-label="Schemat kanału QDa">
-            <TechnicalDrawingQDa
-              a={qdaNumbers.a}
-              b={qdaNumbers.b}
-              l={qdaNumbers.l}
-              p={flange ?? 0}
-            />
+          <div className="technical-drawing-visual" role="figure" aria-label={drawingConfig.ariaLabel}>
+            <DrawingComponent {...drawingConfig.props} />
           </div>
         </div>
       ) : (
