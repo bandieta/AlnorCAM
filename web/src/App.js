@@ -14,7 +14,7 @@ const SHAPE_DEFINITIONS = {
   'QBNa': { polish: 'Łuk symetryczny', dimensions: ['a', 'b', 'e', 'f', 'r', 'alfa'] },
   'QPR6a': { polish: 'Redukcja sym.', dimensions: ['a', 'b', 'c', 'd', 'L', 'h', 'm'] },
   'PR1a': { polish: 'Redukcja kwadrat-koło sym.', dimensions: ['a', 'b', 'd', 'L', 'h', 'm'] },
-  'PR7a': { polish: 'Redukcja kwadrat-koło asym.', dimensions: ['a', 'b', 'd', 'L', 'h', 'm', 'e', 'f'] },
+  'PR7a': { polish: 'Redukcja symetryczna', dimensions: ['a', 'b', 'd', 'L', 'h', 'm', 'e', 'f'] },
   'QPR2a': { polish: 'Redukcja asym.', dimensions: ['a', 'b', 'c', 'd', 'L', 'h', 'm', 'e', 'f'] },
   'QBRa': { polish: 'Łuk redukcyjny', dimensions: ['a', 'b', 'd', 'e', 'f', 'r', 'alfa'] },
   'QBR1a': { polish: 'Łuk dyfuzorowany', dimensions: ['a', 'b', 'c', 'd', 'g', 'e', 'f', 'r', 'alfa'] },

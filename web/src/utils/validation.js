@@ -11,7 +11,7 @@ const LIMITS = {
 
 export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
   const errors = [];
-  const { a, b, e, f, r, alfa, L, c, d, m, w, l3 } = dimensions;
+  const { a, b, e, f, r, alfa, L, c, d, m, w, l3, g } = dimensions;
 
   // Helper to check if value is valid number
   const isNum = (val) => typeof val === 'number' && !isNaN(val);
@@ -117,12 +117,42 @@ export const validateDimensions = (symbol, dimensions, material = 'Ocynk') => {
   }
 
   if (symbol === 'QBR1a') {
-    // alfa 15-90
+    if (b !== undefined && d !== undefined && b > d) {
+      errors.push("Dimension 'b' must be <= 'd'");
+    }
+
     if (alfa !== undefined && (alfa < 15 || alfa > 90)) {
       errors.push("Angle 'alfa' must be between 15 and 90 degrees");
     }
-    if (r !== undefined && r < LIMITS.MIN_RADIUS) {
-      errors.push(`Radius 'r' must be at least ${LIMITS.MIN_RADIUS}mm`);
+
+    const radiusValid = isNum(r);
+    if (r !== undefined && !radiusValid) {
+      errors.push("Radius 'r' must be a number");
+    }
+
+    if (radiusValid && r !== 0 && r < LIMITS.MIN_RADIUS) {
+      errors.push(`Radius 'r' must be 0 or at least ${LIMITS.MIN_RADIUS}mm`);
+    }
+
+    const currentR = radiusValid ? r : null;
+    const minExtension = currentR === 0 ? LIMITS.MIN_EXTENSION_ZERO_R : LIMITS.MIN_EXTENSION;
+
+    if (e !== undefined) {
+      if (!isNum(e) || e < minExtension) {
+        const suffix = currentR === 0 ? ' when r = 0' : '';
+        errors.push(`Dimension 'e' must be >= ${minExtension}mm${suffix}`);
+      }
+    }
+
+    if (f !== undefined) {
+      if (!isNum(f) || f < minExtension) {
+        const suffix = currentR === 0 ? ' when r = 0' : '';
+        errors.push(`Dimension 'f' must be >= ${minExtension}mm${suffix}`);
+      }
+    }
+
+    if (g !== undefined && (!isNum(g) || g < 0)) {
+      errors.push("Dimension 'g' must be a non-negative number");
     }
   }
 

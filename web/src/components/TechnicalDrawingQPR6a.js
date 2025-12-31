@@ -5,11 +5,6 @@ const MARGIN = 12;
 const PRIMARY_STROKE = '#0d47a1';
 const DASH_STROKE = '#1565c0';
 
-const mod = (value, modulus) => {
-  const result = value % modulus;
-  return result >= 0 ? result : result + modulus;
-};
-
 const formatNumber = (value) => {
   if (Number.isNaN(value) || !Number.isFinite(value)) {
     return 0;
@@ -77,10 +72,11 @@ const computeGeometry = ({ a, b, c, d, L, m, h }) => {
     guard += 1;
   }
 
-  let pushX = mod(110 - (aScaled + lScaled + mScaled + hScaled), 110) / 2;
+  let pushX = (110 - (aScaled + lScaled + mScaled + hScaled)) % 110;
   if (pushX < 0) {
     pushX = -pushX;
   }
+  pushX /= 2;
   const pushY = ((90 - bScaled) / 2) + 5;
 
   const frontOriginX = 190 + pushX;

@@ -3,8 +3,12 @@ import TechnicalDrawingQDa from './TechnicalDrawingQDa';
 import TechnicalDrawingQBa from './TechnicalDrawingQBa';
 import TechnicalDrawingQBNa from './TechnicalDrawingQBNa';
 import TechnicalDrawingQPR6a from './TechnicalDrawingQPR6a';
+import TechnicalDrawingQPR2a from './TechnicalDrawingQPR2a';
 import TechnicalDrawingPR1a from './TechnicalDrawingPR1a';
 import TechnicalDrawingPR7a from './TechnicalDrawingPR7a';
+import TechnicalDrawingQBR1a from './TechnicalDrawingQBR1a';
+import TechnicalDrawingQBRa from './TechnicalDrawingQBRa';
+import TechnicalDrawingQBFRa from './TechnicalDrawingQBFRa';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -71,6 +75,69 @@ function TechnicalDrawing({ selectedElement }) {
             h: Number(dimensions.h) || 0
           },
           ariaLabel: 'Schemat redukcji symetrycznej QPR6a'
+        };
+      }
+      case 'QPR2a': {
+        return {
+          Component: TechnicalDrawingQPR2a,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            c: Number(dimensions.c) || 0,
+            d: Number(dimensions.d) || 0,
+            L: Number(dimensions.L || dimensions.l) || 0,
+            m: Number(dimensions.m) || 0,
+            h: Number(dimensions.h) || 0,
+            ee: Number(dimensions.ee ?? dimensions.e) || 0,
+            f: Number(dimensions.f) || 0
+          },
+          ariaLabel: 'Schemat redukcji ukośnej QPR2a'
+        };
+      }
+      case 'QBR1a': {
+        return {
+          Component: TechnicalDrawingQBR1a,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            c: Number(dimensions.c) || 0,
+            d: Number(dimensions.d) || 0,
+            g: Number(dimensions.g) || 0,
+            e: Number(dimensions.e ?? dimensions.ee) || 0,
+            f: Number(dimensions.f) || 0,
+            r: Number(dimensions.r) || 0,
+            alfa: Number(dimensions.alfa) || 0
+          },
+          ariaLabel: 'Schemat łuku dyfuzorowanego QBR1a'
+        };
+      }
+      case 'QBRa': {
+        return {
+          Component: TechnicalDrawingQBRa,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            d: Number(dimensions.d) || 0,
+            ee: Number(dimensions.ee ?? dimensions.e) || 0,
+            f: Number(dimensions.f) || 0,
+            r: Number(dimensions.r) || 0,
+            alfa: Number(dimensions.alfa) || 0
+          },
+          ariaLabel: 'Schemat kolana redukcyjnego QBRa'
+        };
+      }
+      case 'QBFRa': {
+        return {
+          Component: TechnicalDrawingQBFRa,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            d: Number(dimensions.d) || 0,
+            ee: Number(dimensions.ee ?? dimensions.e) || 0,
+            f: Number(dimensions.f) || 0,
+            r: Number(dimensions.r) || 0
+          },
+          ariaLabel: 'Schemat łuku redukcyjnego QBFRa'
         };
       }
       case 'PR1a': {
