@@ -9,6 +9,8 @@ import TechnicalDrawingPR7a from './TechnicalDrawingPR7a';
 import TechnicalDrawingQBR1a from './TechnicalDrawingQBR1a';
 import TechnicalDrawingQBRa from './TechnicalDrawingQBRa';
 import TechnicalDrawingQBFRa from './TechnicalDrawingQBFRa';
+import TechnicalDrawingQBFa from './TechnicalDrawingQBFa';
+import TechnicalDrawingQESa from './TechnicalDrawingQESa';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -138,6 +140,30 @@ function TechnicalDrawing({ selectedElement }) {
             r: Number(dimensions.r) || 0
           },
           ariaLabel: 'Schemat łuku redukcyjnego QBFRa'
+        };
+      }
+      case 'QBFa': {
+        return {
+          Component: TechnicalDrawingQBFa,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            ee: Number(dimensions.ee ?? dimensions.e) || 0,
+            f: Number(dimensions.f) || 0,
+            r: Number(dimensions.r) || 0
+          },
+          ariaLabel: 'Schemat kolana symetrycznego QBFa'
+        };
+      }
+      case 'QESa': {
+        return {
+          Component: TechnicalDrawingQESa,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            ee: Number(dimensions.ee ?? dimensions.e) || 0
+          },
+          ariaLabel: 'Schemat zaślepki prostokątnej QESa'
         };
       }
       case 'PR1a': {
