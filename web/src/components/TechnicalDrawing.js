@@ -11,6 +11,7 @@ import TechnicalDrawingQBRa from './TechnicalDrawingQBRa';
 import TechnicalDrawingQBFRa from './TechnicalDrawingQBFRa';
 import TechnicalDrawingQBFa from './TechnicalDrawingQBFa';
 import TechnicalDrawingQESa from './TechnicalDrawingQESa';
+import TechnicalDrawingTR1a from './TechnicalDrawingTR1a';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -164,6 +165,22 @@ function TechnicalDrawing({ selectedElement }) {
             ee: Number(dimensions.ee ?? dimensions.e) || 0
           },
           ariaLabel: 'Schemat zaślepki prostokątnej QESa'
+        };
+      }
+      case 'TR1a': {
+        return {
+          Component: TechnicalDrawingTR1a,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            d: Number(dimensions.d) || 0,
+            w: Number(dimensions.w) || 0,
+            L: Number(dimensions.L || dimensions.l) || 0,
+            e: Number(dimensions.e ?? dimensions.ee) || 0,
+            f: Number(dimensions.f) || 0,
+            l3: Number(dimensions.l3 ?? dimensions.B) || 0
+          },
+          ariaLabel: 'Schemat trójnika prostokątnego TR1a'
         };
       }
       case 'PR1a': {
