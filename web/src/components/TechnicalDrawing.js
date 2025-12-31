@@ -12,6 +12,7 @@ import TechnicalDrawingQBFRa from './TechnicalDrawingQBFRa';
 import TechnicalDrawingQBFa from './TechnicalDrawingQBFa';
 import TechnicalDrawingQESa from './TechnicalDrawingQESa';
 import TechnicalDrawingTR1a from './TechnicalDrawingTR1a';
+import TechnicalDrawingTR2a from './TechnicalDrawingTR2a';
 import './TechnicalDrawing.css';
 
 function TechnicalDrawing({ selectedElement }) {
@@ -181,6 +182,21 @@ function TechnicalDrawing({ selectedElement }) {
             l3: Number(dimensions.l3 ?? dimensions.B) || 0
           },
           ariaLabel: 'Schemat trójnika prostokątnego TR1a'
+        };
+      }
+      case 'TR2a': {
+        return {
+          Component: TechnicalDrawingTR2a,
+          props: {
+            a: Number(dimensions.a) || 0,
+            b: Number(dimensions.b) || 0,
+            d: Number(dimensions.d) || 0,
+            L: Number(dimensions.L || dimensions.l) || 0,
+            e: Number(dimensions.e ?? dimensions.ee) || 0,
+            f: Number(dimensions.f) || 0,
+            l3: Number(dimensions.l3 ?? dimensions.B) || 0
+          },
+          ariaLabel: 'Schemat trójnika z odejściem okrągłym TR2a'
         };
       }
       case 'PR1a': {
